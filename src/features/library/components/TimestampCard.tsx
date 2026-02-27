@@ -1,5 +1,7 @@
 import React from 'react';
 import { Alert, Image, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Asset } from 'expo-asset';
+import { SvgUri } from 'react-native-svg';
 
 import type { FlattenedVideo } from '../../../types/domain';
 import { formatTime } from '../../../utils/formatTime';
@@ -10,6 +12,13 @@ interface Props {
   onMove: (video: FlattenedVideo) => void;
   onDelete: (video: FlattenedVideo) => void;
 }
+
+const homeMenuIconUri = Asset.fromModule(
+  require('../../../../assets/images/figma/home_card_menu_icon_figma.svg')
+).uri;
+const homeTimestampIconUri = Asset.fromModule(
+  require('../../../../assets/images/figma/home_timestamp_icon_figma.svg')
+).uri;
 
 export function TimestampCard({ item, onOpen, onMove, onDelete }: Props) {
   const openActions = () => {
@@ -27,14 +36,14 @@ export function TimestampCard({ item, onOpen, onMove, onDelete }: Props) {
         <View style={styles.body}>
           <Text style={styles.title} numberOfLines={2}>{item.title || 'Untitled video'}</Text>
           <View style={styles.metaRow}>
-            <Text style={styles.metaIcon}>[]</Text>
+            <SvgUri uri={homeTimestampIconUri} width={10} height={10} />
             <Text style={styles.meta}>{formatTime(item.currentTime)}</Text>
           </View>
         </View>
       </Pressable>
 
       <Pressable style={styles.menuButton} onPress={openActions} hitSlop={10}>
-        <Text style={styles.menuText}>...</Text>
+        <SvgUri uri={homeMenuIconUri} width={27.8563} height={28} />
       </Pressable>
     </View>
   );
@@ -71,6 +80,7 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 14,
     fontWeight: '600',
+    fontFamily: 'Manrope_600SemiBold',
     lineHeight: 20.3
   },
   metaRow: {
@@ -78,16 +88,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 2
   },
-  metaIcon: {
-    color: '#7C7C7C',
-    fontSize: 8,
-    lineHeight: 10,
-    fontWeight: '700'
-  },
   meta: {
     color: '#7C7C7C',
     fontSize: 12,
-    lineHeight: 20.3
+    lineHeight: 20.3,
+    fontFamily: 'Manrope_500Medium'
   },
   menuButton: {
     position: 'absolute',
@@ -97,11 +102,5 @@ const styles = StyleSheet.create({
     height: 28,
     alignItems: 'center',
     justifyContent: 'center'
-  },
-  menuText: {
-    color: '#AFAFB6',
-    fontSize: 12,
-    lineHeight: 12,
-    fontWeight: '700'
   }
 });

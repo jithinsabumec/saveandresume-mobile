@@ -1,23 +1,28 @@
 import React from 'react';
-import { ActivityIndicator, Platform, Pressable, SafeAreaView, StyleSheet, Text, View } from 'react-native';
-
-import { AppGlyph } from '../../../components/BrandMark';
+import { ActivityIndicator, Pressable, SafeAreaView, StyleSheet, Text, View } from 'react-native';
+import { Asset } from 'expo-asset';
+import { SvgUri } from 'react-native-svg';
 
 interface Props {
   loading: boolean;
   onSignIn: () => void;
 }
 
+const appLogoUri = Asset.fromModule(require('../../../../assets/images/figma/app_logo_figma.svg')).uri;
+const googleLogoUri = Asset.fromModule(require('../../../../assets/images/figma/google_logo_figma.svg')).uri;
+
 export function SignInScreen({ loading, onSignIn }: Props) {
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
         <View style={styles.hero}>
-          <AppGlyph size={52} />
-          <Text style={styles.title}>Never lose a moment.</Text>
-          <Text style={styles.subtitle}>
-            Save YouTube timestamps on your phone, pick them up on your desktop. Everything stays in sync.
-          </Text>
+          <SvgUri uri={appLogoUri} width={48.7063} height={48} />
+          <View style={styles.textGroup}>
+            <Text style={styles.title}>Never lose a moment.</Text>
+            <Text style={styles.subtitle}>
+              Save YouTube timestamps on your phone, pick them up on your desktop. Everything stays in sync.
+            </Text>
+          </View>
         </View>
 
         <Pressable style={styles.button} onPress={onSignIn} disabled={loading}>
@@ -25,7 +30,7 @@ export function SignInScreen({ loading, onSignIn }: Props) {
             <ActivityIndicator color="#FAFAFA" />
           ) : (
             <>
-              <Text style={styles.googleGlyph}>G</Text>
+              <SvgUri uri={googleLogoUri} width={19.198} height={19.52} />
               <Text style={styles.buttonText}>CONTINUE WITH GOOGLE</Text>
             </>
           )}
@@ -52,19 +57,25 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingBottom: 120,
+    gap: 48
+  },
+  textGroup: {
+    width: '100%',
+    alignItems: 'center',
     gap: 16
   },
   title: {
     color: '#F5F5F5',
     fontSize: 30,
     lineHeight: 43,
-    fontWeight: '600',
+    fontFamily: 'Manrope_600SemiBold',
     textAlign: 'center'
   },
   subtitle: {
     color: '#A0A0A0',
     fontSize: 18,
     lineHeight: 24,
+    fontFamily: 'Manrope_500Medium',
     textAlign: 'center',
     letterSpacing: 0.18
   },
@@ -80,19 +91,13 @@ const styles = StyleSheet.create({
     marginBottom: 56,
     flexDirection: 'row',
     justifyContent: 'center',
-    alignItems: 'center'
-  },
-  googleGlyph: {
-    color: '#FFFFFF',
-    fontSize: 24,
-    lineHeight: 24,
-    fontWeight: '700',
-    marginRight: 18
+    alignItems: 'center',
+    gap: 18
   },
   buttonText: {
     color: '#FFFFFF',
     fontSize: 18,
     lineHeight: 24,
-    fontFamily: Platform.select({ ios: 'Menlo', android: 'monospace', default: 'monospace' })
+    fontFamily: 'SpaceMono_400Regular'
   }
 });

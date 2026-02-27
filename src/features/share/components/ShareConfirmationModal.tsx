@@ -1,5 +1,5 @@
 import React from 'react';
-import { ActivityIndicator, Image, Modal, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Image, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 
 interface Props {
   visible: boolean;
@@ -60,8 +60,6 @@ export function ShareConfirmationModal({
     </Modal>
   );
 }
-
-const mono = Platform.select({ ios: 'Menlo', android: 'monospace', default: 'monospace' });
 
 const styles = StyleSheet.create({
   overlay: {
@@ -127,7 +125,7 @@ const styles = StyleSheet.create({
     color: '#7C7C7C',
     fontSize: 14,
     lineHeight: 20.3,
-    fontFamily: mono
+    fontFamily: 'Manrope_500Medium'
   },
   loaderRow: {
     flexDirection: 'row',
@@ -154,7 +152,7 @@ const styles = StyleSheet.create({
     color: '#A3A3A3',
     fontSize: 18,
     lineHeight: 24,
-    fontFamily: mono
+    fontFamily: 'Manrope_500Medium'
   },
   saveButton: {
     borderRadius: 8,
@@ -171,6 +169,6 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 18,
     lineHeight: 24,
-    fontFamily: mono
+    fontFamily: 'Manrope_500Medium'
   }
 });

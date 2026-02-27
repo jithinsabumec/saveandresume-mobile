@@ -42,7 +42,7 @@ const styles = StyleSheet.create({
     maxHeight: 36
   },
   container: {
-    paddingHorizontal: 24,
+    paddingHorizontal: 16,
     gap: 4.8,
     alignItems: 'center'
   },
@@ -68,6 +68,7 @@ const styles = StyleSheet.create({
   chipText: {
     fontSize: 14,
     fontWeight: '600',
+    fontFamily: 'Manrope_600SemiBold',
     lineHeight: 21.3
   },
   textActive: {
@@ -93,6 +94,7 @@ const styles = StyleSheet.create({
   countText: {
     fontSize: 10,
     lineHeight: 12,
-    fontWeight: '600'
+    fontWeight: '600',
+    fontFamily: 'Manrope_600SemiBold'
   }
 });

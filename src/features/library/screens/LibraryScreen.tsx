@@ -4,6 +4,7 @@ import {
   ActivityIndicator,
   Alert,
   FlatList,
+  Image,
   Linking,
   Platform,
   Pressable,
@@ -13,10 +14,11 @@ import {
   Text,
   View
 } from 'react-native';
+import { Asset } from 'expo-asset';
+import { SvgUri } from 'react-native-svg';
 
 import { stateRepository } from '../../../data/stateRepository';
 import { timestampsRepository } from '../../../data/timestampsRepository';
-import { BrandMark } from '../../../components/BrandMark';
 import {
   DEFAULT_CATEGORY,
   flattenCategories,
@@ -53,13 +55,22 @@ interface MissingTimestampNotice {
 
 interface Props {
   userId: string;
+  userEmail: string | null;
+  userDisplayName: string | null;
+  userPhotoUrl: string | null;
   onSignOut: () => Promise<void>;
   signingOut: boolean;
 }
 
 const ALL_FILTER = 'All';
+const homeLogoUri = Asset.fromModule(require('../../../../assets/images/figma/home_logo_figma.svg')).uri;
+const homeSignOutIconUri = Asset.fromModule(
+  require('../../../../assets/images/figma/home_signout_icon_figma.svg')
+).uri;
+const homeEditIconUri = Asset.fromModule(require('../../../../assets/images/figma/home_edit_icon_figma.svg')).uri;
+const homeAddIconUri = Asset.fromModule(require('../../../../assets/images/figma/home_add_icon_figma.svg')).uri;
 
-export function LibraryScreen({ userId, onSignOut, signingOut }: Props) {
+export function LibraryScreen({ userId, userEmail, userDisplayName, userPhotoUrl, onSignOut, signingOut }: Props) {
   const queryClient = useQueryClient();
   const { data, isLoading, error } = useLibraryState(userId);
 
@@ -72,6 +83,7 @@ export function LibraryScreen({ userId, onSignOut, signingOut }: Props) {
   const [processingShare, setProcessingShare] = useState(false);
   const [mutating, setMutating] = useState(false);
   const [managingCategories, setManagingCategories] = useState(false);
+  const [avatarImageError, setAvatarImageError] = useState(false);
 
   const categories = data?.categories ?? { [DEFAULT_CATEGORY]: [] };
 
@@ -81,8 +93,15 @@ export function LibraryScreen({ userId, onSignOut, signingOut }: Props) {
     () => categoryNames.filter((category) => category !== DEFAULT_CATEGORY),
     [categoryNames]
   );
-  const userInitial = useMemo(() => userId.slice(0, 1).toUpperCase() || 'U', [userId]);
+  const userInitial = useMemo(() => {
+    const label = userDisplayName?.trim() || userEmail?.trim() || userId.trim() || 'U';
+    return label.slice(0, 1).toUpperCase();
+  }, [userDisplayName, userEmail, userId]);
   const androidTopInset = Platform.OS === 'android' ? (StatusBar.currentHeight ?? 0) + 8 : 0;
+
+  useEffect(() => {
+    setAvatarImageError(false);
+  }, [userPhotoUrl]);
 
   const videos = useMemo(() => {
     const selected = selectedCategory === ALL_FILTER ? 'all' : selectedCategory;
@@ -405,16 +424,24 @@ export function LibraryScreen({ userId, onSignOut, signingOut }: Props) {
   return (
     <SafeAreaView style={[styles.safeArea, { paddingTop: androidTopInset }]}>
       <View style={styles.header}>
-        <BrandMark size="small" />
+        <SvgUri uri={homeLogoUri} width={90.023} height={40.29} />
         <View style={styles.headerActions}>
           <View style={styles.avatar}>
-            <Text style={styles.avatarText}>{userInitial}</Text>
+            {userPhotoUrl && !avatarImageError ? (
+              <Image
+                source={{ uri: userPhotoUrl }}
+                style={styles.avatarImage}
+                onError={() => setAvatarImageError(true)}
+              />
+            ) : (
+              <Text style={styles.avatarText}>{userInitial}</Text>
+            )}
           </View>
           <Pressable style={styles.headerIconButton} onPress={() => void onSignOut()} disabled={signingOut}>
             {signingOut ? (
               <ActivityIndicator size="small" color="#D2D2D2" />
             ) : (
-              <Text style={styles.headerIconText}>-&gt;</Text>
+              <SvgUri uri={homeSignOutIconUri} width={16} height={16} />
             )}
           </Pressable>
         </View>
@@ -425,21 +452,17 @@ export function LibraryScreen({ userId, onSignOut, signingOut }: Props) {
           <Text style={styles.categoriesTitle}>Categories</Text>
           <View style={styles.categoriesHeaderActions}>
             <Pressable
-              style={styles.categoryActionButton}
+              style={[
+                styles.categoryActionButton,
+                deletableCategories.length === 0 ? styles.categoryActionButtonDisabled : null
+              ]}
               onPress={() => setManagingCategories((current) => !current)}
               disabled={deletableCategories.length === 0}
             >
-              <Text
-                style={[
-                  styles.categoryActionText,
-                  deletableCategories.length === 0 ? styles.categoryActionTextDisabled : null
-                ]}
-              >
-                {managingCategories ? 'OK' : 'ED'}
-              </Text>
+              <SvgUri uri={homeEditIconUri} width={14} height={14} />
             </Pressable>
             <Pressable style={styles.categoryActionButton} onPress={() => setAddCategoryOpen(true)}>
-              <Text style={styles.categoryActionText}>+</Text>
+              <SvgUri uri={homeAddIconUri} width={14} height={14} />
             </Pressable>
           </View>
         </View>
@@ -539,7 +562,7 @@ const styles = StyleSheet.create({
   header: {
     height: 40.3,
     marginTop: 12,
-    marginHorizontal: 24,
+    marginHorizontal: 16,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between'
@@ -557,10 +580,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center'
   },
+  avatarImage: {
+    width: 28,
+    height: 28,
+    borderRadius: 14
+  },
   avatarText: {
     color: '#FFFFFF',
     fontSize: 12,
-    fontWeight: '700'
+    fontWeight: '600',
+    fontFamily: 'Manrope_600SemiBold'
   },
   headerIconButton: {
     width: 28,
@@ -572,18 +601,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center'
   },
-  headerIconText: {
-    color: '#D2D2D2',
-    fontSize: 11,
-    lineHeight: 12,
-    fontWeight: '700'
-  },
   categoriesSection: {
     marginTop: 36,
     gap: 9.5
   },
   categoriesHeader: {
-    marginHorizontal: 24,
+    marginHorizontal: 16,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between'
@@ -592,6 +615,7 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '600',
+    fontFamily: 'Manrope_600SemiBold',
     lineHeight: 22
   },
   categoriesHeaderActions: {
@@ -609,20 +633,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center'
   },
-  categoryActionText: {
-    color: '#D2D2D2',
-    fontSize: 10,
-    lineHeight: 12,
-    fontWeight: '700'
-  },
-  categoryActionTextDisabled: {
-    color: '#555555'
+  categoryActionButtonDisabled: {
+    opacity: 0.45
   },
   manageRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 8,
-    paddingHorizontal: 24,
+    paddingHorizontal: 16,
     paddingTop: 8,
     paddingBottom: 4
   },
@@ -640,24 +658,26 @@ const styles = StyleSheet.create({
   manageChipText: {
     color: '#F3B4C1',
     fontSize: 13,
-    fontWeight: '600'
+    fontWeight: '600',
+    fontFamily: 'Manrope_600SemiBold'
   },
   manageChipIcon: {
     color: '#F3B4C1',
     fontSize: 12,
     lineHeight: 12,
-    fontWeight: '700'
+    fontWeight: '600',
+    fontFamily: 'Manrope_600SemiBold'
   },
   errorText: {
     color: '#F3A3B6',
-    paddingHorizontal: 24,
+    paddingHorizontal: 16,
     marginBottom: 8
   },
   list: {
     flex: 1
   },
   listContent: {
-    paddingHorizontal: 24,
+    paddingHorizontal: 16,
     paddingTop: 12,
     paddingBottom: 120
   },
@@ -682,6 +702,7 @@ const styles = StyleSheet.create({
   processingText: {
     color: '#E8E8E8',
     fontSize: 14,
-    fontWeight: '600'
+    fontWeight: '600',
+    fontFamily: 'Manrope_600SemiBold'
   }
 });

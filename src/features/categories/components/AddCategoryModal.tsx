@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Modal, Platform, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Modal, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
 interface Props {
   visible: boolean;
@@ -92,7 +92,7 @@ const styles = StyleSheet.create({
     color: '#A3A3A3',
     fontSize: 18,
     lineHeight: 24,
-    fontFamily: Platform.select({ ios: 'Menlo', android: 'monospace', default: 'monospace' })
+    fontFamily: 'Manrope_500Medium'
   },
   save: {
     borderRadius: 8,
@@ -106,6 +106,6 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 18,
     lineHeight: 24,
-    fontFamily: Platform.select({ ios: 'Menlo', android: 'monospace', default: 'monospace' })
+    fontFamily: 'Manrope_500Medium'
   }
 });

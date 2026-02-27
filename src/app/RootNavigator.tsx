@@ -39,6 +39,9 @@ export function RootNavigator() {
         {() => (
           <LibraryScreen
             userId={user.uid}
+            userEmail={user.email ?? null}
+            userDisplayName={user.displayName ?? null}
+            userPhotoUrl={user.photoURL ?? null}
             signingOut={signingOut}
             onSignOut={() =>
               signOut().catch((error) => {

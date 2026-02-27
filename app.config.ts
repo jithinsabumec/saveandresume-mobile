@@ -26,6 +26,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     },
     android: {
       package: 'com.saveandresume.mobile',
+      versionCode: 6,
       googleServicesFile: './google-services.json',
       ...(isProduction
         ? {
@@ -43,6 +44,16 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     },
     plugins: [
       ...(isProduction ? [] : ['expo-dev-client']),
+      [
+        'expo-font',
+        {
+          fonts: [
+            './assets/fonts/Manrope_500Medium.ttf',
+            './assets/fonts/Manrope_600SemiBold.ttf',
+            './assets/fonts/SpaceMono_400Regular.ttf'
+          ]
+        }
+      ],
       [
         'expo-build-properties',
         {
