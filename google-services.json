@@ -14,6 +14,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "169747525486-8mi3s2mol6i7vlkqvntlouvde8jbg9hl.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.saveandresume.mobile",
+            "certificate_hash": "c0fcbe4c2552ebe89cee228596c4e328a86d2308"
+          }
+        },
+        {
           "client_id": "169747525486-co210qgi4mkgm75uo4tbc80gsvp9mn4l.apps.googleusercontent.com",
           "client_type": 3
         }
@@ -29,6 +37,13 @@
             {
               "client_id": "169747525486-co210qgi4mkgm75uo4tbc80gsvp9mn4l.apps.googleusercontent.com",
               "client_type": 3
+            },
+            {
+              "client_id": "169747525486-b3n32niqo0jabnib78klrumlh9ndi4de.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.saveandresume.mobile"
+              }
             }
           ]
         }

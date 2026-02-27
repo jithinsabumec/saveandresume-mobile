@@ -35,7 +35,6 @@ export const env = {
   },
   google: {
     webClientId: readEnvVar('EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID'),
-    iosClientId: readEnvVar('EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID'),
-    androidClientId: readEnvVar('EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID')
+    iosClientId: readEnvVar('EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID')
   }
 };
