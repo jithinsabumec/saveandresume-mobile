@@ -10,7 +10,12 @@ interface Props {
 
 export function CategoryFilterBar({ categories, selected, counts, onSelect }: Props) {
   return (
-    <ScrollView horizontal style={styles.scroll} contentContainerStyle={styles.container} showsHorizontalScrollIndicator={false}>
+    <ScrollView
+      horizontal
+      style={styles.scroll}
+      contentContainerStyle={styles.container}
+      showsHorizontalScrollIndicator={false}
+    >
       {categories.map((category) => {
         const isActive = selected === category;
         return (
@@ -34,53 +39,60 @@ export function CategoryFilterBar({ categories, selected, counts, onSelect }: Pr
 
 const styles = StyleSheet.create({
   scroll: {
-    maxHeight: 54
+    maxHeight: 36
   },
   container: {
-    paddingHorizontal: 16,
-    gap: 8,
+    paddingHorizontal: 24,
+    gap: 4.8,
     alignItems: 'center'
   },
   chip: {
-    borderRadius: 999,
+    height: 28.4,
+    borderRadius: 32,
     borderWidth: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 8
+    gap: 4.8,
+    justifyContent: 'center',
+    paddingLeft: 10.6,
+    paddingRight: 7.1
   },
   chipActive: {
-    backgroundColor: '#E4FF5D',
-    borderColor: '#E4FF5D'
+    backgroundColor: '#83112E',
+    borderColor: '#C61743'
   },
   chipInactive: {
-    backgroundColor: '#18181B',
-    borderColor: '#27272A'
+    backgroundColor: '#191919',
+    borderColor: '#2D2D2D'
   },
   chipText: {
     fontSize: 14,
-    fontWeight: '600'
+    fontWeight: '600',
+    lineHeight: 21.3
   },
   textActive: {
-    color: '#111111'
+    color: '#FFFFFF'
   },
   textInactive: {
-    color: '#E4E4E7'
+    color: '#D2D2D2'
   },
   count: {
-    borderRadius: 999,
-    paddingHorizontal: 8,
-    paddingVertical: 2
+    minWidth: 22.5,
+    height: 14.2,
+    borderRadius: 12,
+    paddingHorizontal: 7,
+    alignItems: 'center',
+    justifyContent: 'center'
   },
   countActive: {
-    backgroundColor: '#11111111'
+    backgroundColor: '#B82C4F'
   },
   countInactive: {
-    backgroundColor: '#2F2F33'
+    backgroundColor: '#2D2D2D'
   },
   countText: {
-    fontSize: 12,
-    fontWeight: '700'
+    fontSize: 10,
+    lineHeight: 12,
+    fontWeight: '600'
   }
 });

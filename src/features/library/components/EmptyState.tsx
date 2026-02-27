@@ -11,12 +11,14 @@ export function EmptyState() {
 
 const styles = StyleSheet.create({
   container: {
-    paddingVertical: 80,
-    paddingHorizontal: 20
+    paddingTop: 80,
+    paddingHorizontal: 20,
+    paddingBottom: 32
   },
   text: {
-    color: '#9CA3AF',
+    color: '#7C7C7C',
+    fontSize: 14,
     textAlign: 'center',
-    lineHeight: 22
+    lineHeight: 20
   }
 });

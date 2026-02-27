@@ -1,5 +1,5 @@
 import React from 'react';
-import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Modal, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 interface Props {
   visible: boolean;
@@ -41,52 +41,58 @@ export function MoveToCategoryModal({ visible, categories, currentCategory, onCl
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: '#000000AA',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'center',
     padding: 24
   },
   modal: {
-    backgroundColor: '#111216',
-    borderRadius: 16,
+    backgroundColor: '#1D1D1D',
+    borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#24262E',
+    borderColor: '#363636',
     padding: 16,
     maxHeight: '70%'
   },
   title: {
-    color: '#FAFAFA',
-    fontSize: 18,
-    fontWeight: '700',
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
     marginBottom: 10
   },
   scroll: {
     maxHeight: 320
   },
   row: {
-    borderRadius: 10,
-    backgroundColor: '#1A1C23',
+    borderRadius: 9,
+    borderWidth: 1,
+    borderColor: '#2D2D2D',
+    backgroundColor: '#191919',
     paddingVertical: 12,
     paddingHorizontal: 12,
     marginBottom: 8
   },
   rowActive: {
-    backgroundColor: '#233116'
+    backgroundColor: '#34121A',
+    borderColor: '#81273B'
   },
   rowText: {
-    color: '#F5F5F5',
-    fontWeight: '600'
+    color: '#D2D2D2',
+    fontWeight: '600',
+    fontSize: 14
   },
   rowTextActive: {
-    color: '#E4FF5D'
+    color: '#FFFFFF'
   },
   close: {
     alignSelf: 'flex-end',
-    marginTop: 8,
-    paddingHorizontal: 10,
+    marginTop: 10,
+    paddingHorizontal: 16,
     paddingVertical: 8
   },
   closeText: {
-    color: '#A1A1AA',
-    fontWeight: '600'
+    color: '#A3A3A3',
+    fontSize: 18,
+    lineHeight: 24,
+    fontFamily: Platform.select({ ios: 'Menlo', android: 'monospace', default: 'monospace' })
   }
 });

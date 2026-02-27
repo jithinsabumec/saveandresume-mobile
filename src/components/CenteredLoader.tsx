@@ -1,10 +1,13 @@
 import React from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
+import { BrandMark } from './BrandMark';
+
 export function CenteredLoader() {
   return (
     <View style={styles.container}>
-      <ActivityIndicator size="large" color="#E4FF5D" />
+      <BrandMark size="large" />
+      <ActivityIndicator style={styles.loader} size="small" color="#ED1A43" />
     </View>
   );
 }
@@ -14,6 +17,9 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#0B0B0B'
+    backgroundColor: '#101010'
+  },
+  loader: {
+    marginTop: 40
   }
 });

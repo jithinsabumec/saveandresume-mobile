@@ -10,11 +10,11 @@ const navTheme = {
   ...DarkTheme,
   colors: {
     ...DarkTheme.colors,
-    background: '#0A0B0F',
-    card: '#111216',
+    background: '#101010',
+    card: '#1D1D1D',
     text: '#FAFAFA',
-    border: '#24262E',
-    primary: '#E4FF5D'
+    border: '#363636',
+    primary: '#ED1A43'
   }
 };
 

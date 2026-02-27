@@ -8,6 +8,7 @@ import {
   Platform,
   Pressable,
   SafeAreaView,
+  StatusBar,
   StyleSheet,
   Text,
   View
@@ -15,6 +16,7 @@ import {
 
 import { stateRepository } from '../../../data/stateRepository';
 import { timestampsRepository } from '../../../data/timestampsRepository';
+import { BrandMark } from '../../../components/BrandMark';
 import {
   DEFAULT_CATEGORY,
   flattenCategories,
@@ -29,9 +31,11 @@ import { buildYouTubeWatchUrl, parseSharedTextForYouTubeTimestamp } from '../../
 import { AddCategoryModal } from '../../categories/components/AddCategoryModal';
 import { MoveToCategoryModal } from '../../categories/components/MoveToCategoryModal';
 import { CategoryFilterBar } from '../components/CategoryFilterBar';
+import { EmptyState } from '../components/EmptyState';
 import { TimestampCard } from '../components/TimestampCard';
 import { useLibraryState } from '../hooks/useLibraryState';
 import { ShareConfirmationModal } from '../../share/components/ShareConfirmationModal';
+import { MissingTimestampDialog } from '../../share/components/MissingTimestampDialog';
 
 interface PendingShare {
   parsed: ShareParseSuccess;
@@ -39,6 +43,12 @@ interface PendingShare {
   thumbnailUrl: string;
   loadingMetadata: boolean;
   note: string;
+}
+
+interface MissingTimestampNotice {
+  videoId: string;
+  title: string;
+  thumbnailUrl: string;
 }
 
 interface Props {
@@ -57,14 +67,22 @@ export function LibraryScreen({ userId, onSignOut, signingOut }: Props) {
   const [addCategoryOpen, setAddCategoryOpen] = useState(false);
   const [moveVideo, setMoveVideo] = useState<FlattenedVideo | null>(null);
   const [pendingShare, setPendingShare] = useState<PendingShare | null>(null);
+  const [missingTimestampNotice, setMissingTimestampNotice] = useState<MissingTimestampNotice | null>(null);
   const [savingShare, setSavingShare] = useState(false);
   const [processingShare, setProcessingShare] = useState(false);
   const [mutating, setMutating] = useState(false);
+  const [managingCategories, setManagingCategories] = useState(false);
 
   const categories = data?.categories ?? { [DEFAULT_CATEGORY]: [] };
 
   const categoryNames = useMemo(() => listCategoriesForDisplay(categories), [categories]);
   const filterCategories = useMemo(() => [ALL_FILTER, ...categoryNames], [categoryNames]);
+  const deletableCategories = useMemo(
+    () => categoryNames.filter((category) => category !== DEFAULT_CATEGORY),
+    [categoryNames]
+  );
+  const userInitial = useMemo(() => userId.slice(0, 1).toUpperCase() || 'U', [userId]);
+  const androidTopInset = Platform.OS === 'android' ? (StatusBar.currentHeight ?? 0) + 8 : 0;
 
   const videos = useMemo(() => {
     const selected = selectedCategory === ALL_FILTER ? 'all' : selectedCategory;
@@ -160,20 +178,11 @@ export function LibraryScreen({ userId, onSignOut, signingOut }: Props) {
           await refreshState();
           await shareIntentService.clearInitialSharedText();
           trackEvent('save_success', { source: 'share_intent_missing_timestamp' });
-
-          Alert.alert(
-            'Timestamp Not Captured',
-            "This video was saved at 0:00. To save the exact moment, go back to YouTube, tap Share again, and enable the 'Start at' toggle before sharing.",
-            [
-              {
-                text: 'Go Back to YouTube',
-                onPress: () => {
-                  void openYouTubeFromAlert(videoId);
-                }
-              },
-              { text: 'OK' }
-            ]
-          );
+          setMissingTimestampNotice({
+            videoId,
+            title: metadata.title || `YouTube video ${videoId}`,
+            thumbnailUrl: metadata.thumbnailUrl || fallbackThumbnail
+          });
         } catch (saveError) {
           trackEvent('save_failure', {
             source: 'share_intent_missing_timestamp',
@@ -218,7 +227,7 @@ export function LibraryScreen({ userId, onSignOut, signingOut }: Props) {
         loadingMetadata: false
       };
     });
-  }, [openYouTubeFromAlert, refreshState, saveSharedTimestamp]);
+  }, [refreshState, saveSharedTimestamp]);
 
   useEffect(() => {
     if (!shareIntentService.isSupported()) {
@@ -283,6 +292,19 @@ export function LibraryScreen({ userId, onSignOut, signingOut }: Props) {
     setPendingShare(null);
     await shareIntentService.clearInitialSharedText();
   }, []);
+
+  const handleDismissMissingTimestamp = useCallback(() => {
+    setMissingTimestampNotice(null);
+  }, []);
+
+  const handleGoToYouTubeFromDialog = useCallback(() => {
+    if (!missingTimestampNotice) {
+      return;
+    }
+
+    setMissingTimestampNotice(null);
+    void openYouTubeFromAlert(missingTimestampNotice.videoId);
+  }, [missingTimestampNotice, openYouTubeFromAlert]);
 
   const handleOpenVideo = useCallback((video: FlattenedVideo) => {
     trackEvent('open_video', { videoId: video.videoId, source: 'library' });
@@ -370,6 +392,7 @@ export function LibraryScreen({ userId, onSignOut, signingOut }: Props) {
               setSelectedCategory(ALL_FILTER);
             }
             await refreshState();
+            setManagingCategories(false);
             trackEvent('category_actions', { action: 'delete_category', category });
           } finally {
             setMutating(false);
@@ -380,36 +403,65 @@ export function LibraryScreen({ userId, onSignOut, signingOut }: Props) {
   }, [refreshState, selectedCategory, userId]);
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={[styles.safeArea, { paddingTop: androidTopInset }]}>
       <View style={styles.header}>
-        <View>
-          <Text style={styles.title}>Timestamp Saver</Text>
-          <Text style={styles.subtitle}>All your saved moments, synced.</Text>
-        </View>
+        <BrandMark size="small" />
         <View style={styles.headerActions}>
-          <Pressable style={styles.headerButton} onPress={() => setAddCategoryOpen(true)}>
-            <Text style={styles.headerButtonText}>+ Category</Text>
-          </Pressable>
-          <Pressable style={styles.signOutButton} onPress={() => void onSignOut()} disabled={signingOut}>
-            <Text style={styles.signOutText}>{signingOut ? '...' : 'Sign Out'}</Text>
+          <View style={styles.avatar}>
+            <Text style={styles.avatarText}>{userInitial}</Text>
+          </View>
+          <Pressable style={styles.headerIconButton} onPress={() => void onSignOut()} disabled={signingOut}>
+            {signingOut ? (
+              <ActivityIndicator size="small" color="#D2D2D2" />
+            ) : (
+              <Text style={styles.headerIconText}>-&gt;</Text>
+            )}
           </Pressable>
         </View>
       </View>
 
-      <CategoryFilterBar
-        categories={filterCategories}
-        selected={selectedCategory}
-        counts={counts}
-        onSelect={setSelectedCategory}
-      />
+      <View style={styles.categoriesSection}>
+        <View style={styles.categoriesHeader}>
+          <Text style={styles.categoriesTitle}>Categories</Text>
+          <View style={styles.categoriesHeaderActions}>
+            <Pressable
+              style={styles.categoryActionButton}
+              onPress={() => setManagingCategories((current) => !current)}
+              disabled={deletableCategories.length === 0}
+            >
+              <Text
+                style={[
+                  styles.categoryActionText,
+                  deletableCategories.length === 0 ? styles.categoryActionTextDisabled : null
+                ]}
+              >
+                {managingCategories ? 'OK' : 'ED'}
+              </Text>
+            </Pressable>
+            <Pressable style={styles.categoryActionButton} onPress={() => setAddCategoryOpen(true)}>
+              <Text style={styles.categoryActionText}>+</Text>
+            </Pressable>
+          </View>
+        </View>
 
-      <View style={styles.manageRow}>
-        {categoryNames.filter((category) => category !== DEFAULT_CATEGORY).map((category) => (
-          <Pressable key={category} style={styles.manageChip} onPress={() => handleDeleteCategory(category)}>
-            <Text style={styles.manageChipText}>Delete {category}</Text>
-          </Pressable>
-        ))}
+        <CategoryFilterBar
+          categories={filterCategories}
+          selected={selectedCategory}
+          counts={counts}
+          onSelect={setSelectedCategory}
+        />
       </View>
+
+      {managingCategories && deletableCategories.length > 0 ? (
+        <View style={styles.manageRow}>
+          {deletableCategories.map((category) => (
+            <Pressable key={category} style={styles.manageChip} onPress={() => handleDeleteCategory(category)}>
+              <Text style={styles.manageChipText}>{category}</Text>
+              <Text style={styles.manageChipIcon}>x</Text>
+            </Pressable>
+          ))}
+        </View>
+      ) : null}
 
       {error ? <Text style={styles.errorText}>Failed to load timestamps. Pull to retry.</Text> : null}
 
@@ -420,11 +472,7 @@ export function LibraryScreen({ userId, onSignOut, signingOut }: Props) {
         keyExtractor={(item) => item.videoId}
         refreshing={isLoading || mutating}
         onRefresh={() => void refreshState()}
-        ListEmptyComponent={
-          <View style={styles.emptyContainer}>
-            <Text style={styles.emptyText}>No timestamps here yet. Share a YouTube URL from the YouTube app.</Text>
-          </View>
-        }
+        ListEmptyComponent={<EmptyState />}
         renderItem={({ item }) => (
           <TimestampCard
             item={item}
@@ -463,10 +511,18 @@ export function LibraryScreen({ userId, onSignOut, signingOut }: Props) {
         onConfirm={() => void handleConfirmShare()}
       />
 
+      <MissingTimestampDialog
+        visible={Boolean(missingTimestampNotice)}
+        title={missingTimestampNotice?.title ?? ''}
+        thumbnailUrl={missingTimestampNotice?.thumbnailUrl ?? ''}
+        onDismiss={handleDismissMissingTimestamp}
+        onGoToYoutube={handleGoToYouTubeFromDialog}
+      />
+
       {processingShare ? (
         <View style={styles.processingOverlay}>
           <View style={styles.processingCard}>
-            <ActivityIndicator color="#E4FF5D" />
+            <ActivityIndicator color="#ED1A43" />
             <Text style={styles.processingText}>Saving shared video...</Text>
           </View>
         </View>
@@ -478,109 +534,153 @@ export function LibraryScreen({ userId, onSignOut, signingOut }: Props) {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#0A0B0F'
+    backgroundColor: '#101010'
   },
   header: {
-    paddingHorizontal: 16,
-    paddingTop: 8,
-    paddingBottom: 10,
-    gap: 10
-  },
-  title: {
-    color: '#FAFAFA',
-    fontSize: 24,
-    fontWeight: '700'
-  },
-  subtitle: {
-    color: '#A1A1AA',
-    fontSize: 14,
-    marginTop: 4
+    height: 40.3,
+    marginTop: 12,
+    marginHorizontal: 24,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between'
   },
   headerActions: {
     flexDirection: 'row',
-    gap: 8
+    alignItems: 'center',
+    gap: 4
   },
-  headerButton: {
-    backgroundColor: '#E4FF5D',
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 8
+  avatar: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: '#8D7AEF',
+    alignItems: 'center',
+    justifyContent: 'center'
   },
-  headerButtonText: {
-    color: '#121212',
+  avatarText: {
+    color: '#FFFFFF',
+    fontSize: 12,
     fontWeight: '700'
   },
-  signOutButton: {
-    backgroundColor: '#1A1C23',
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 8
+  headerIconButton: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: '#585864',
+    backgroundColor: '#474750',
+    alignItems: 'center',
+    justifyContent: 'center'
   },
-  signOutText: {
-    color: '#E4E4E7',
-    fontWeight: '600'
+  headerIconText: {
+    color: '#D2D2D2',
+    fontSize: 11,
+    lineHeight: 12,
+    fontWeight: '700'
+  },
+  categoriesSection: {
+    marginTop: 36,
+    gap: 9.5
+  },
+  categoriesHeader: {
+    marginHorizontal: 24,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between'
+  },
+  categoriesTitle: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
+    lineHeight: 22
+  },
+  categoriesHeaderActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6
+  },
+  categoryActionButton: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: '#3C3C3C',
+    backgroundColor: '#191919',
+    alignItems: 'center',
+    justifyContent: 'center'
+  },
+  categoryActionText: {
+    color: '#D2D2D2',
+    fontSize: 10,
+    lineHeight: 12,
+    fontWeight: '700'
+  },
+  categoryActionTextDisabled: {
+    color: '#555555'
   },
   manageRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 8,
-    paddingHorizontal: 16,
-    paddingVertical: 8
+    paddingHorizontal: 24,
+    paddingTop: 8,
+    paddingBottom: 4
   },
   manageChip: {
-    backgroundColor: '#2D1416',
-    borderColor: '#4A1D21',
+    backgroundColor: '#34121A',
+    borderColor: '#81273B',
     borderWidth: 1,
-    borderRadius: 999,
+    borderRadius: 99,
     paddingHorizontal: 10,
-    paddingVertical: 6
+    minHeight: 28,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6
   },
   manageChipText: {
-    color: '#FCA5A5',
-    fontSize: 12,
+    color: '#F3B4C1',
+    fontSize: 13,
     fontWeight: '600'
   },
+  manageChipIcon: {
+    color: '#F3B4C1',
+    fontSize: 12,
+    lineHeight: 12,
+    fontWeight: '700'
+  },
   errorText: {
-    color: '#F87171',
-    paddingHorizontal: 16,
+    color: '#F3A3B6',
+    paddingHorizontal: 24,
     marginBottom: 8
   },
   list: {
     flex: 1
   },
   listContent: {
-    padding: 16,
+    paddingHorizontal: 24,
+    paddingTop: 12,
     paddingBottom: 120
-  },
-  emptyContainer: {
-    paddingVertical: 80,
-    paddingHorizontal: 20
-  },
-  emptyText: {
-    color: '#9CA3AF',
-    textAlign: 'center',
-    lineHeight: 22
   },
   processingOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: '#00000099',
+    backgroundColor: '#00000075',
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 20
   },
   processingCard: {
-    backgroundColor: '#121317',
-    borderRadius: 14,
-    borderColor: '#282B35',
+    backgroundColor: '#1D1D1D',
+    borderRadius: 12,
+    borderColor: '#363636',
     borderWidth: 1,
-    paddingHorizontal: 18,
-    paddingVertical: 14,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10
+    gap: 8
   },
   processingText: {
-    color: '#F1F5F9',
+    color: '#E8E8E8',
     fontSize: 14,
     fontWeight: '600'
   }

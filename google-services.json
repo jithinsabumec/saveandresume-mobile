@@ -22,6 +22,14 @@
           }
         },
         {
+          "client_id": "169747525486-8r6esobaufo4s8qtv95gp42ih5coqtg8.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.saveandresume.mobile",
+            "certificate_hash": "4e253d998967fcb32e93fa0d5607b0b018b3ecf6"
+          }
+        },
+        {
           "client_id": "169747525486-co210qgi4mkgm75uo4tbc80gsvp9mn4l.apps.googleusercontent.com",
           "client_type": 3
         }

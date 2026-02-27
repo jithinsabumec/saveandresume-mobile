@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Modal, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Modal, Platform, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
 interface Props {
   visible: boolean;
@@ -50,53 +50,62 @@ export function AddCategoryModal({ visible, onClose, onSubmit }: Props) {
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: '#000000AA',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'center',
     padding: 24
   },
   modal: {
-    backgroundColor: '#111216',
-    borderRadius: 16,
+    backgroundColor: '#1D1D1D',
+    borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#24262E',
+    borderColor: '#363636',
     padding: 16,
     gap: 12
   },
   title: {
-    color: '#FAFAFA',
-    fontSize: 18,
-    fontWeight: '700'
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600'
   },
   input: {
-    borderRadius: 10,
-    borderColor: '#2B2F3A',
+    borderRadius: 8,
+    borderColor: '#2D2D2D',
     borderWidth: 1,
+    backgroundColor: '#141414',
     color: '#FFFFFF',
     paddingHorizontal: 12,
     paddingVertical: 10,
-    fontSize: 15
+    fontSize: 15,
+    lineHeight: 20
   },
   actions: {
     flexDirection: 'row',
     justifyContent: 'flex-end',
-    gap: 10
+    alignItems: 'center',
+    gap: 16
   },
   cancel: {
-    paddingHorizontal: 12,
-    paddingVertical: 10
+    paddingHorizontal: 16,
+    paddingVertical: 8
   },
   cancelText: {
-    color: '#A1A1AA',
-    fontWeight: '600'
+    color: '#A3A3A3',
+    fontSize: 18,
+    lineHeight: 24,
+    fontFamily: Platform.select({ ios: 'Menlo', android: 'monospace', default: 'monospace' })
   },
   save: {
-    backgroundColor: '#E4FF5D',
-    borderRadius: 10,
-    paddingHorizontal: 14,
-    paddingVertical: 10
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#ED1A43',
+    backgroundColor: 'rgba(255, 27, 71, 0.4)',
+    paddingHorizontal: 16,
+    paddingVertical: 8
   },
   saveText: {
-    color: '#131313',
-    fontWeight: '700'
+    color: '#FFFFFF',
+    fontSize: 18,
+    lineHeight: 24,
+    fontFamily: Platform.select({ ios: 'Menlo', android: 'monospace', default: 'monospace' })
   }
 });

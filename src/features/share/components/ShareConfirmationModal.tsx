@@ -1,5 +1,5 @@
 import React from 'react';
-import { ActivityIndicator, Image, Modal, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, Image, Modal, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 
 interface Props {
   visible: boolean;
@@ -17,50 +17,42 @@ interface Props {
 
 export function ShareConfirmationModal({
   visible,
-  videoId,
   title,
   thumbnailUrl,
   formattedTime,
-  note,
   loadingMetadata,
   saving,
-  onChangeNote,
   onCancel,
   onConfirm
 }: Props) {
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={onCancel}>
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={onCancel}>
       <View style={styles.overlay}>
+        <Pressable style={styles.backdrop} onPress={onCancel} />
         <View style={styles.sheet}>
+          <View style={styles.handle} />
           <Text style={styles.heading}>Save Timestamp</Text>
 
           <Image source={{ uri: thumbnailUrl }} style={styles.thumbnail} />
-          <Text style={styles.title} numberOfLines={2}>{title}</Text>
-          <Text style={styles.videoId}>Video ID: {videoId}</Text>
-          <Text style={styles.time}>Timestamp: {formattedTime}</Text>
-
-          <TextInput
-            value={note}
-            onChangeText={onChangeNote}
-            placeholder="Add an optional note"
-            placeholderTextColor="#6B7280"
-            style={styles.noteInput}
-            editable={!saving}
-          />
+          <Text style={styles.title} numberOfLines={2}>{title || 'YouTube video'}</Text>
+          <View style={styles.timeRow}>
+            <Text style={styles.timeIcon}>[]</Text>
+            <Text style={styles.time}>{formattedTime}</Text>
+          </View>
 
           {loadingMetadata ? (
             <View style={styles.loaderRow}>
-              <ActivityIndicator color="#E4FF5D" />
+              <ActivityIndicator color="#ED1A43" />
               <Text style={styles.loaderText}>Loading video metadata...</Text>
             </View>
           ) : null}
 
           <View style={styles.actions}>
-            <Pressable style={styles.cancel} onPress={onCancel} disabled={saving}>
-              <Text style={styles.cancelText}>Dismiss</Text>
+            <Pressable style={styles.dismissButton} onPress={onCancel} disabled={saving}>
+              <Text style={styles.dismissText}>DISMISS</Text>
             </Pressable>
-            <Pressable style={styles.confirm} onPress={onConfirm} disabled={saving || loadingMetadata}>
-              {saving ? <ActivityIndicator color="#111" /> : <Text style={styles.confirmText}>Save</Text>}
+            <Pressable style={styles.saveButton} onPress={onConfirm} disabled={saving || loadingMetadata}>
+              {saving ? <ActivityIndicator color="#FFFFFF" /> : <Text style={styles.saveText}>SAVE</Text>}
             </Pressable>
           </View>
         </View>
@@ -69,89 +61,116 @@ export function ShareConfirmationModal({
   );
 }
 
+const mono = Platform.select({ ios: 'Menlo', android: 'monospace', default: 'monospace' });
+
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    justifyContent: 'flex-end',
-    backgroundColor: '#00000099'
+    justifyContent: 'flex-end'
+  },
+  backdrop: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)'
   },
   sheet: {
-    backgroundColor: '#121317',
+    backgroundColor: '#1D1D1D',
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
-    padding: 16,
+    paddingHorizontal: 24,
+    paddingBottom: 16,
+    paddingTop: 8,
     borderTopWidth: 1,
-    borderColor: '#282B35',
-    gap: 8
+    borderColor: '#363636'
+  },
+  handle: {
+    width: 46,
+    height: 4,
+    borderRadius: 100,
+    backgroundColor: '#282828',
+    alignSelf: 'center',
+    marginBottom: 20
   },
   heading: {
-    color: '#FAFAFA',
-    fontSize: 18,
-    fontWeight: '700',
-    marginBottom: 4
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
+    lineHeight: 25,
+    marginBottom: 12,
+    textAlign: 'center'
   },
   thumbnail: {
     width: '100%',
-    height: 170,
+    aspectRatio: 16 / 9,
     borderRadius: 12,
     backgroundColor: '#242424'
   },
   title: {
-    color: '#F1F5F9',
-    fontSize: 15,
-    fontWeight: '600'
+    color: '#F1F1F1',
+    fontSize: 18,
+    lineHeight: 25,
+    fontWeight: '600',
+    marginTop: 12
+  },
+  timeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginTop: 8
+  },
+  timeIcon: {
+    color: '#7C7C7C',
+    fontSize: 10,
+    lineHeight: 14,
+    fontWeight: '700'
   },
   time: {
-    color: '#A1A1AA',
-    fontSize: 14
-  },
-  videoId: {
-    color: '#9CA3AF',
-    fontSize: 12
-  },
-  noteInput: {
-    borderRadius: 10,
-    borderColor: '#2B2F3A',
-    borderWidth: 1,
-    color: '#FFFFFF',
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    fontSize: 15,
-    marginTop: 2
+    color: '#7C7C7C',
+    fontSize: 14,
+    lineHeight: 20.3,
+    fontFamily: mono
   },
   loaderRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    marginTop: 2
+    marginTop: 10
   },
   loaderText: {
-    color: '#9CA3AF'
+    color: '#9A9AA2'
   },
   actions: {
     flexDirection: 'row',
     justifyContent: 'flex-end',
-    gap: 10,
-    marginTop: 12
+    alignItems: 'center',
+    gap: 16,
+    marginTop: 18
   },
-  cancel: {
-    paddingHorizontal: 12,
-    paddingVertical: 10
+  dismissButton: {
+    borderRadius: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 8
   },
-  cancelText: {
-    color: '#A1A1AA',
-    fontWeight: '600'
+  dismissText: {
+    color: '#A3A3A3',
+    fontSize: 18,
+    lineHeight: 24,
+    fontFamily: mono
   },
-  confirm: {
-    backgroundColor: '#E4FF5D',
-    borderRadius: 10,
-    paddingHorizontal: 18,
-    paddingVertical: 10,
-    minWidth: 88,
-    alignItems: 'center'
+  saveButton: {
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#ED1A43',
+    backgroundColor: 'rgba(255, 27, 71, 0.4)',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    minWidth: 77,
+    alignItems: 'center',
+    justifyContent: 'center'
   },
-  confirmText: {
-    color: '#121212',
-    fontWeight: '700'
+  saveText: {
+    color: '#FFFFFF',
+    fontSize: 18,
+    lineHeight: 24,
+    fontFamily: mono
   }
 });

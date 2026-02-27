@@ -1,5 +1,5 @@
 import React from 'react';
-import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Alert, Image, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import type { FlattenedVideo } from '../../../types/domain';
 import { formatTime } from '../../../utils/formatTime';
@@ -12,75 +12,96 @@ interface Props {
 }
 
 export function TimestampCard({ item, onOpen, onMove, onDelete }: Props) {
+  const openActions = () => {
+    Alert.alert('Timestamp actions', 'Choose an action for this item.', [
+      { text: 'Move', onPress: () => onMove(item) },
+      { text: 'Delete', style: 'destructive', onPress: () => onDelete(item) },
+      { text: 'Cancel', style: 'cancel' }
+    ]);
+  };
+
   return (
-    <Pressable style={styles.card} onPress={() => onOpen(item)}>
-      <Image source={{ uri: item.thumbnail }} style={styles.thumbnail} />
-      <View style={styles.body}>
-        <Text style={styles.title} numberOfLines={2}>{item.title || 'Untitled video'}</Text>
-        <Text style={styles.meta}>Timestamp {formatTime(item.currentTime)} • {item.category}</Text>
-        <View style={styles.actions}>
-          <Pressable style={styles.secondaryBtn} onPress={() => onMove(item)}>
-            <Text style={styles.secondaryText}>Move</Text>
-          </Pressable>
-          <Pressable style={styles.dangerBtn} onPress={() => onDelete(item)}>
-            <Text style={styles.dangerText}>Delete</Text>
-          </Pressable>
+    <View style={styles.card}>
+      <Pressable style={styles.touchArea} onPress={() => onOpen(item)}>
+        <Image source={{ uri: item.thumbnail }} style={styles.thumbnail} />
+        <View style={styles.body}>
+          <Text style={styles.title} numberOfLines={2}>{item.title || 'Untitled video'}</Text>
+          <View style={styles.metaRow}>
+            <Text style={styles.metaIcon}>[]</Text>
+            <Text style={styles.meta}>{formatTime(item.currentTime)}</Text>
+          </View>
         </View>
-      </View>
-    </Pressable>
+      </Pressable>
+
+      <Pressable style={styles.menuButton} onPress={openActions} hitSlop={10}>
+        <Text style={styles.menuText}>...</Text>
+      </Pressable>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: '#111216',
-    borderColor: '#24262E',
+    position: 'relative',
+    backgroundColor: '#191919',
+    borderColor: '#2D2D2D',
     borderWidth: 1,
-    borderRadius: 16,
-    overflow: 'hidden',
+    borderRadius: 9.5,
     marginBottom: 12
   },
+  touchArea: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 9.5
+  },
   thumbnail: {
-    width: '100%',
-    height: 180,
+    width: 142.5,
+    height: 79.3,
+    borderRadius: 5.4,
     backgroundColor: '#1F1F1F'
   },
   body: {
-    padding: 12,
-    gap: 8
+    flex: 1,
+    minHeight: 79.3,
+    paddingLeft: 9.5,
+    paddingRight: 28,
+    justifyContent: 'space-between'
   },
   title: {
-    color: '#F5F5F5',
-    fontSize: 15,
-    fontWeight: '600'
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '600',
+    lineHeight: 20.3
+  },
+  metaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2
+  },
+  metaIcon: {
+    color: '#7C7C7C',
+    fontSize: 8,
+    lineHeight: 10,
+    fontWeight: '700'
   },
   meta: {
-    color: '#A1A1AA',
-    fontSize: 13
+    color: '#7C7C7C',
+    fontSize: 12,
+    lineHeight: 20.3
   },
-  actions: {
-    flexDirection: 'row',
-    gap: 8,
-    marginTop: 4
+  menuButton: {
+    position: 'absolute',
+    right: 3,
+    bottom: 7,
+    width: 28,
+    height: 28,
+    alignItems: 'center',
+    justifyContent: 'center'
   },
-  secondaryBtn: {
-    backgroundColor: '#1E293B',
-    borderRadius: 10,
-    paddingVertical: 8,
-    paddingHorizontal: 14
-  },
-  secondaryText: {
-    color: '#E2E8F0',
-    fontWeight: '600'
-  },
-  dangerBtn: {
-    backgroundColor: '#3F1A1C',
-    borderRadius: 10,
-    paddingVertical: 8,
-    paddingHorizontal: 14
-  },
-  dangerText: {
-    color: '#FCA5A5',
-    fontWeight: '600'
+  menuText: {
+    color: '#AFAFB6',
+    fontSize: 12,
+    lineHeight: 12,
+    fontWeight: '700'
   }
 });

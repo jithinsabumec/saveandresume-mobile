@@ -1,5 +1,7 @@
 import React from 'react';
-import { ActivityIndicator, Pressable, SafeAreaView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Platform, Pressable, SafeAreaView, StyleSheet, Text, View } from 'react-native';
+
+import { AppGlyph } from '../../../components/BrandMark';
 
 interface Props {
   loading: boolean;
@@ -10,11 +12,23 @@ export function SignInScreen({ loading, onSignIn }: Props) {
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
-        <Text style={styles.title}>Timestamp Saver</Text>
-        <Text style={styles.subtitle}>Save YouTube moments instantly from Share.</Text>
+        <View style={styles.hero}>
+          <AppGlyph size={52} />
+          <Text style={styles.title}>Never lose a moment.</Text>
+          <Text style={styles.subtitle}>
+            Save YouTube timestamps on your phone, pick them up on your desktop. Everything stays in sync.
+          </Text>
+        </View>
 
         <Pressable style={styles.button} onPress={onSignIn} disabled={loading}>
-          {loading ? <ActivityIndicator color="#101010" /> : <Text style={styles.buttonText}>Continue with Google</Text>}
+          {loading ? (
+            <ActivityIndicator color="#FAFAFA" />
+          ) : (
+            <>
+              <Text style={styles.googleGlyph}>G</Text>
+              <Text style={styles.buttonText}>CONTINUE WITH GOOGLE</Text>
+            </>
+          )}
         </Pressable>
       </View>
     </SafeAreaView>
@@ -24,34 +38,61 @@ export function SignInScreen({ loading, onSignIn }: Props) {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#0B0B0B'
+    backgroundColor: '#101010'
   },
   container: {
     flex: 1,
+    alignItems: 'center',
+    paddingHorizontal: 24
+  },
+  hero: {
+    flex: 1,
+    width: '100%',
+    maxWidth: 342,
+    alignItems: 'center',
     justifyContent: 'center',
-    padding: 24
+    paddingBottom: 120,
+    gap: 16
   },
   title: {
-    color: '#FAFAFA',
-    fontSize: 32,
-    fontWeight: '700'
+    color: '#F5F5F5',
+    fontSize: 30,
+    lineHeight: 43,
+    fontWeight: '600',
+    textAlign: 'center'
   },
   subtitle: {
-    marginTop: 12,
-    color: '#A1A1AA',
-    fontSize: 16,
+    color: '#A0A0A0',
+    fontSize: 18,
     lineHeight: 24,
-    marginBottom: 32
+    textAlign: 'center',
+    letterSpacing: 0.18
   },
   button: {
-    borderRadius: 12,
-    backgroundColor: '#E4FF5D',
-    paddingVertical: 14,
+    width: 342,
+    minHeight: 40,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#ED1A43',
+    backgroundColor: 'rgba(255, 27, 71, 0.4)',
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    marginBottom: 56,
+    flexDirection: 'row',
+    justifyContent: 'center',
     alignItems: 'center'
   },
+  googleGlyph: {
+    color: '#FFFFFF',
+    fontSize: 24,
+    lineHeight: 24,
+    fontWeight: '700',
+    marginRight: 18
+  },
   buttonText: {
-    color: '#101010',
-    fontSize: 16,
-    fontWeight: '700'
+    color: '#FFFFFF',
+    fontSize: 18,
+    lineHeight: 24,
+    fontFamily: Platform.select({ ios: 'Menlo', android: 'monospace', default: 'monospace' })
   }
 });
