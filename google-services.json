@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "169747525486",
+    "project_id": "save-and-resume",
+    "storage_bucket": "save-and-resume.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:169747525486:android:bf678983bf842a291d9b7f",
+        "android_client_info": {
+          "package_name": "com.saveandresume.mobile"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "169747525486-co210qgi4mkgm75uo4tbc80gsvp9mn4l.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDhHR2S124fT5MXiQnwWiBuGN0e3QZT-IY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "169747525486-co210qgi4mkgm75uo4tbc80gsvp9mn4l.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
