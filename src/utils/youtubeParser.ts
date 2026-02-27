@@ -9,8 +9,13 @@ const SUPPORTED_YOUTUBE_HOSTS = new Set([
   'www.youtu.be'
 ]);
 
-function failure(code: ShareParseFailure['code'], message: string, sourceUrl?: string): ShareParseFailure {
-  return { ok: false, code, message, sourceUrl };
+function failure(
+  code: ShareParseFailure['code'],
+  message: string,
+  sourceUrl?: string,
+  videoId?: string
+): ShareParseFailure {
+  return { ok: false, code, message, sourceUrl, videoId };
 }
 
 function extractFirstUrl(text: string): string | null {
@@ -110,7 +115,7 @@ function parseFromUrl(urlText: string): ShareParseResult {
 
   const tToken = url.searchParams.get('t');
   if (!tToken) {
-    return failure('MISSING_TIMESTAMP', 'The shared URL is missing the timestamp parameter `t`.', urlText);
+    return failure('MISSING_TIMESTAMP', 'The shared URL is missing the timestamp parameter `t`.', urlText, videoId);
   }
 
   const rawSeconds = parseTimestampToken(tToken);

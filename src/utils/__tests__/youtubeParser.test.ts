@@ -37,6 +37,7 @@ describe('parseSharedTextForYouTubeTimestamp', () => {
     expect(result.ok).toBe(false);
     if (!result.ok) {
       expect(result.code).toBe('MISSING_TIMESTAMP');
+      expect(result.videoId).toBe('abc123');
     }
   });
 

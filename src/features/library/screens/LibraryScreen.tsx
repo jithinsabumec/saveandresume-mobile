@@ -1,6 +1,7 @@
 import { useQueryClient } from '@tanstack/react-query';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
+  ActivityIndicator,
   Alert,
   FlatList,
   Linking,
@@ -13,12 +14,14 @@ import {
 } from 'react-native';
 
 import { stateRepository } from '../../../data/stateRepository';
+import { timestampsRepository } from '../../../data/timestampsRepository';
 import {
   DEFAULT_CATEGORY,
   flattenCategories,
   listCategoriesForDisplay
 } from '../../../data/stateTransforms';
 import { trackEvent } from '../../../services/telemetry';
+import { showGenericSaveErrorToast } from '../../../services/toast';
 import { fetchYouTubeMetadata } from '../../../services/youtubeMetadata';
 import { shareIntentService } from '../../../services/shareIntent';
 import type { FlattenedVideo, ShareParseSuccess } from '../../../types/domain';
@@ -35,6 +38,7 @@ interface PendingShare {
   title: string;
   thumbnailUrl: string;
   loadingMetadata: boolean;
+  note: string;
 }
 
 interface Props {
@@ -54,6 +58,7 @@ export function LibraryScreen({ userId, onSignOut, signingOut }: Props) {
   const [moveVideo, setMoveVideo] = useState<FlattenedVideo | null>(null);
   const [pendingShare, setPendingShare] = useState<PendingShare | null>(null);
   const [savingShare, setSavingShare] = useState(false);
+  const [processingShare, setProcessingShare] = useState(false);
   const [mutating, setMutating] = useState(false);
 
   const categories = data?.categories ?? { [DEFAULT_CATEGORY]: [] };
@@ -82,12 +87,106 @@ export function LibraryScreen({ userId, onSignOut, signingOut }: Props) {
     await queryClient.invalidateQueries({ queryKey: ['library-state', userId] });
   }, [queryClient, userId]);
 
+  const openYouTubeFromAlert = useCallback(async (videoId: string) => {
+    const deepLink = `youtube://www.youtube.com/watch?v=${encodeURIComponent(videoId)}`;
+    const fallback = `https://youtu.be/${encodeURIComponent(videoId)}`;
+
+    try {
+      const canOpenDeepLink = await Linking.canOpenURL(deepLink);
+      if (canOpenDeepLink) {
+        await Linking.openURL(deepLink);
+        return;
+      }
+    } catch {
+      // Fall through to browser fallback URL.
+    }
+
+    await Linking.openURL(fallback);
+  }, []);
+
+  const saveSharedTimestamp = useCallback(async (
+    payload: {
+      videoId: string;
+      sourceUrl: string;
+      rawSeconds: number;
+      formattedTime: string;
+      note: string | null;
+    },
+    libraryMetadata: { title: string; thumbnailUrl: string }
+  ) => {
+    await timestampsRepository.createTimestamp(userId, payload);
+    await stateRepository.upsertTimestamp(
+      userId,
+      {
+        videoId: payload.videoId,
+        title: libraryMetadata.title,
+        currentTime: payload.rawSeconds,
+        thumbnail: libraryMetadata.thumbnailUrl,
+        timestamp: Date.now()
+      },
+      DEFAULT_CATEGORY
+    );
+  }, [userId]);
+
   const consumeSharedText = useCallback(async (sharedText: string) => {
     trackEvent('share_received', { platform: Platform.OS });
 
     const parsed = parseSharedTextForYouTubeTimestamp(sharedText);
     if (!parsed.ok) {
       trackEvent('parse_failure', { code: parsed.code });
+      if (parsed.code === 'MISSING_TIMESTAMP' && parsed.videoId) {
+        const videoId = parsed.videoId;
+        const sourceUrl = parsed.sourceUrl ?? sharedText;
+        const fallbackThumbnail = `https://i.ytimg.com/vi/${encodeURIComponent(videoId)}/hqdefault.jpg`;
+        setPendingShare(null);
+        setProcessingShare(true);
+
+        try {
+          const metadata = await fetchYouTubeMetadata(videoId);
+
+          await saveSharedTimestamp(
+            {
+              videoId,
+              sourceUrl,
+              rawSeconds: 0,
+              formattedTime: '0:00',
+              note: null
+            },
+            {
+              title: metadata.title || `YouTube video ${videoId}`,
+              thumbnailUrl: metadata.thumbnailUrl || fallbackThumbnail
+            }
+          );
+          await refreshState();
+          await shareIntentService.clearInitialSharedText();
+          trackEvent('save_success', { source: 'share_intent_missing_timestamp' });
+
+          Alert.alert(
+            'Timestamp Not Captured',
+            "This video was saved at 0:00. To save the exact moment, go back to YouTube, tap Share again, and enable the 'Start at' toggle before sharing.",
+            [
+              {
+                text: 'Go Back to YouTube',
+                onPress: () => {
+                  void openYouTubeFromAlert(videoId);
+                }
+              },
+              { text: 'OK' }
+            ]
+          );
+        } catch (saveError) {
+          trackEvent('save_failure', {
+            source: 'share_intent_missing_timestamp',
+            error: saveError instanceof Error ? saveError.message : 'unknown'
+          });
+          showGenericSaveErrorToast();
+          await shareIntentService.clearInitialSharedText();
+        } finally {
+          setProcessingShare(false);
+        }
+        return;
+      }
+
       Alert.alert('Cannot Save Timestamp', parsed.message);
       await shareIntentService.clearInitialSharedText();
       return;
@@ -100,7 +199,8 @@ export function LibraryScreen({ userId, onSignOut, signingOut }: Props) {
       parsed,
       title: `YouTube video ${parsed.videoId}`,
       thumbnailUrl: fallbackThumbnail,
-      loadingMetadata: true
+      loadingMetadata: true,
+      note: ''
     });
 
     trackEvent('confirm_shown');
@@ -118,7 +218,7 @@ export function LibraryScreen({ userId, onSignOut, signingOut }: Props) {
         loadingMetadata: false
       };
     });
-  }, []);
+  }, [openYouTubeFromAlert, refreshState, saveSharedTimestamp]);
 
   useEffect(() => {
     if (!shareIntentService.isSupported()) {
@@ -151,16 +251,18 @@ export function LibraryScreen({ userId, onSignOut, signingOut }: Props) {
     setSavingShare(true);
 
     try {
-      await stateRepository.upsertTimestamp(
-        userId,
+      await saveSharedTimestamp(
         {
           videoId: pendingShare.parsed.videoId,
-          title: pendingShare.title,
-          currentTime: pendingShare.parsed.rawSeconds,
-          thumbnail: pendingShare.thumbnailUrl,
-          timestamp: Date.now()
+          sourceUrl: pendingShare.parsed.sourceUrl,
+          rawSeconds: pendingShare.parsed.rawSeconds,
+          formattedTime: pendingShare.parsed.formattedTime,
+          note: pendingShare.note.trim() ? pendingShare.note.trim() : null
         },
-        DEFAULT_CATEGORY
+        {
+          title: pendingShare.title,
+          thumbnailUrl: pendingShare.thumbnailUrl
+        }
       );
       await refreshState();
       await shareIntentService.clearInitialSharedText();
@@ -171,11 +273,11 @@ export function LibraryScreen({ userId, onSignOut, signingOut }: Props) {
         source: 'share_intent',
         error: saveError instanceof Error ? saveError.message : 'unknown'
       });
-      Alert.alert('Save Failed', 'Unable to save this timestamp. Please try again.');
+      showGenericSaveErrorToast();
     } finally {
       setSavingShare(false);
     }
-  }, [pendingShare, refreshState, userId]);
+  }, [pendingShare, refreshState, saveSharedTimestamp]);
 
   const handleCancelShare = useCallback(async () => {
     setPendingShare(null);
@@ -349,14 +451,26 @@ export function LibraryScreen({ userId, onSignOut, signingOut }: Props) {
 
       <ShareConfirmationModal
         visible={Boolean(pendingShare)}
+        videoId={pendingShare?.parsed.videoId ?? ''}
         title={pendingShare?.title ?? ''}
         thumbnailUrl={pendingShare?.thumbnailUrl ?? ''}
         formattedTime={pendingShare?.parsed.formattedTime ?? ''}
+        note={pendingShare?.note ?? ''}
         loadingMetadata={pendingShare?.loadingMetadata ?? false}
         saving={savingShare}
+        onChangeNote={(value) => setPendingShare((current) => (current ? { ...current, note: value } : current))}
         onCancel={() => void handleCancelShare()}
         onConfirm={() => void handleConfirmShare()}
       />
+
+      {processingShare ? (
+        <View style={styles.processingOverlay}>
+          <View style={styles.processingCard}>
+            <ActivityIndicator color="#E4FF5D" />
+            <Text style={styles.processingText}>Saving shared video...</Text>
+          </View>
+        </View>
+      ) : null}
     </SafeAreaView>
   );
 }
@@ -446,5 +560,28 @@ const styles = StyleSheet.create({
     color: '#9CA3AF',
     textAlign: 'center',
     lineHeight: 22
+  },
+  processingOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: '#00000099',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 20
+  },
+  processingCard: {
+    backgroundColor: '#121317',
+    borderRadius: 14,
+    borderColor: '#282B35',
+    borderWidth: 1,
+    paddingHorizontal: 18,
+    paddingVertical: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10
+  },
+  processingText: {
+    color: '#F1F5F9',
+    fontSize: 14,
+    fontWeight: '600'
   }
 });

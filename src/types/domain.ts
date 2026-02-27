@@ -41,6 +41,7 @@ export interface ShareParseFailure {
   code: ShareParseErrorCode;
   message: string;
   sourceUrl?: string;
+  videoId?: string;
 }
 
 export interface ShareParseSuccess {

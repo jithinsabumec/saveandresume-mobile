@@ -15,6 +15,8 @@ Expo custom-dev-client React Native app for saving YouTube timestamps from Andro
   - delete timestamp
 - YouTube deep link open (`watch?v=...&t=...s`).
 - Android share-intent parsing and confirmation flow in JS.
+- Missing `t` links are auto-saved at `0:00` with guidance alert to reshare with YouTube `Start at`.
+- Shared timestamps are written to `users/{uid}/timestamps/{timestampId}` (with `note` + Firestore timestamp).
 - Android native bridge plugin + Java module templates for share payload handoff.
 - Unit tests for URL parser and state transforms.
 
@@ -65,4 +67,4 @@ npx expo prebuild --platform android
 
 - iOS is app-shell only in V1 (no iOS share extension yet).
 - YouTube Shorts are intentionally rejected in V1.
-- Notes are intentionally omitted in V1.
+- Optional notes are captured in share confirmation and stored in `users/{uid}/timestamps`.

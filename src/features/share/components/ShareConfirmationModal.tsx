@@ -1,24 +1,30 @@
 import React from 'react';
-import { ActivityIndicator, Image, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Image, Modal, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
 interface Props {
   visible: boolean;
+  videoId: string;
   title: string;
   thumbnailUrl: string;
   formattedTime: string;
+  note: string;
   loadingMetadata: boolean;
   saving: boolean;
+  onChangeNote: (value: string) => void;
   onCancel: () => void;
   onConfirm: () => void;
 }
 
 export function ShareConfirmationModal({
   visible,
+  videoId,
   title,
   thumbnailUrl,
   formattedTime,
+  note,
   loadingMetadata,
   saving,
+  onChangeNote,
   onCancel,
   onConfirm
 }: Props) {
@@ -30,7 +36,17 @@ export function ShareConfirmationModal({
 
           <Image source={{ uri: thumbnailUrl }} style={styles.thumbnail} />
           <Text style={styles.title} numberOfLines={2}>{title}</Text>
+          <Text style={styles.videoId}>Video ID: {videoId}</Text>
           <Text style={styles.time}>Timestamp: {formattedTime}</Text>
+
+          <TextInput
+            value={note}
+            onChangeText={onChangeNote}
+            placeholder="Add an optional note"
+            placeholderTextColor="#6B7280"
+            style={styles.noteInput}
+            editable={!saving}
+          />
 
           {loadingMetadata ? (
             <View style={styles.loaderRow}>
@@ -88,6 +104,20 @@ const styles = StyleSheet.create({
   time: {
     color: '#A1A1AA',
     fontSize: 14
+  },
+  videoId: {
+    color: '#9CA3AF',
+    fontSize: 12
+  },
+  noteInput: {
+    borderRadius: 10,
+    borderColor: '#2B2F3A',
+    borderWidth: 1,
+    color: '#FFFFFF',
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    fontSize: 15,
+    marginTop: 2
   },
   loaderRow: {
     flexDirection: 'row',
