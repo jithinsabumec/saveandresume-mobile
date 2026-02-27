@@ -103,7 +103,64 @@ function injectKotlinPackageRegistration(source) {
 
 function ensureManifestIntentFilter(manifest) {
   const mainApp = AndroidConfig.Manifest.getMainApplicationOrThrow(manifest);
-  const mainActivity = AndroidConfig.Manifest.getMainActivityOrThrow(mainApp);
+  const activities = Array.isArray(mainApp.activity) ? mainApp.activity : [];
+
+  const hasLauncherIntent = (activity) => {
+    const filters = activity?.['intent-filter'] || [];
+    return filters.some((filter) => {
+      const actions = filter.action || [];
+      const categories = filter.category || [];
+      const hasMain = actions.some((a) => a.$?.['android:name'] === 'android.intent.action.MAIN');
+      const hasLauncher = categories.some((c) => c.$?.['android:name'] === 'android.intent.category.LAUNCHER');
+      return hasMain && hasLauncher;
+    });
+  };
+
+  const isMainActivityName = (activity) => {
+    const name = activity?.$?.['android:name'];
+    return typeof name === 'string' && name.endsWith('MainActivity');
+  };
+
+  let mainActivity = AndroidConfig.Manifest.getMainActivity(mainApp);
+  if (!mainActivity) {
+    mainActivity = activities.find(isMainActivityName) || activities.find(hasLauncherIntent);
+  }
+
+  if (!mainActivity) {
+    mainActivity = {
+      $: {
+        'android:name': '.MainActivity',
+        'android:exported': 'true'
+      },
+      'intent-filter': [
+        {
+          action: [{ $: { 'android:name': 'android.intent.action.MAIN' } }],
+          category: [{ $: { 'android:name': 'android.intent.category.LAUNCHER' } }]
+        }
+      ]
+    };
+    mainApp.activity = [...activities, mainActivity];
+  } else {
+    const mainName = mainActivity.$?.['android:name'];
+    if (mainName) {
+      const duplicates = activities.filter(
+        (activity) => activity !== mainActivity && activity?.$?.['android:name'] === mainName
+      );
+
+      if (duplicates.length > 0) {
+        const mergedFilters = [...(mainActivity['intent-filter'] || [])];
+        duplicates.forEach((duplicate) => {
+          (duplicate['intent-filter'] || []).forEach((filter) => mergedFilters.push(filter));
+        });
+        mainActivity['intent-filter'] = mergedFilters;
+      }
+
+      mainApp.activity = (Array.isArray(mainApp.activity) ? mainApp.activity : []).filter(
+        (activity) => activity === mainActivity || activity?.$?.['android:name'] !== mainName
+      );
+    }
+  }
+
   const intentFilters = mainActivity['intent-filter'] || [];
 
   const hasShareFilter = intentFilters.some((filter) => {
