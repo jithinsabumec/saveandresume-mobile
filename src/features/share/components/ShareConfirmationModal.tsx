@@ -1,6 +1,8 @@
 import React from 'react';
 import { ActivityIndicator, Image, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { ShareModalTimestampIcon } from '../../../components/FigmaIcons';
+
 interface Props {
   visible: boolean;
   videoId: string;
@@ -26,34 +28,63 @@ export function ShareConfirmationModal({
   onConfirm
 }: Props) {
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={onCancel}>
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={onCancel} statusBarTranslucent>
       <View style={styles.overlay}>
-        <Pressable style={styles.backdrop} onPress={onCancel} />
+        <Pressable style={styles.backdrop} onPress={onCancel} disabled={saving} />
+
         <View style={styles.sheet}>
           <View style={styles.handle} />
-          <Text style={styles.heading}>Save Timestamp</Text>
 
-          <Image source={{ uri: thumbnailUrl }} style={styles.thumbnail} />
-          <Text style={styles.title} numberOfLines={2}>{title || 'YouTube video'}</Text>
-          <View style={styles.timeRow}>
-            <Text style={styles.timeIcon}>[]</Text>
-            <Text style={styles.time}>{formattedTime}</Text>
-          </View>
+          <View style={styles.content}>
+            <Text style={styles.heading}>Save Timestamp</Text>
 
-          {loadingMetadata ? (
-            <View style={styles.loaderRow}>
-              <ActivityIndicator color="#ED1A43" />
-              <Text style={styles.loaderText}>Loading video metadata...</Text>
+            <View style={styles.previewBlock}>
+              {thumbnailUrl ? (
+                <Image source={{ uri: thumbnailUrl }} style={styles.thumbnail} />
+              ) : (
+                <View style={[styles.thumbnail, styles.thumbnailFallback]} />
+              )}
+
+              <View style={styles.textBlock}>
+                <Text style={styles.title} numberOfLines={2}>
+                  {title || 'YouTube video'}
+                </Text>
+
+                <View style={styles.timeRow}>
+                  <ShareModalTimestampIcon width={14} height={14} />
+                  <Text style={styles.time}>{formattedTime}</Text>
+                </View>
+              </View>
             </View>
-          ) : null}
 
-          <View style={styles.actions}>
-            <Pressable style={styles.dismissButton} onPress={onCancel} disabled={saving}>
-              <Text style={styles.dismissText}>DISMISS</Text>
-            </Pressable>
-            <Pressable style={styles.saveButton} onPress={onConfirm} disabled={saving || loadingMetadata}>
-              {saving ? <ActivityIndicator color="#FFFFFF" /> : <Text style={styles.saveText}>SAVE</Text>}
-            </Pressable>
+            {loadingMetadata ? (
+              <View style={styles.loaderRow}>
+                <ActivityIndicator color="#ED1A43" />
+                <Text style={styles.loaderText}>Loading video metadata...</Text>
+              </View>
+            ) : null}
+
+            <View style={styles.actions}>
+              <Pressable
+                style={({ pressed }) => [styles.dismissButton, pressed ? styles.dismissButtonPressed : null]}
+                onPress={onCancel}
+                disabled={saving}
+              >
+                <Text style={styles.dismissText}>DISMISS</Text>
+              </Pressable>
+
+              <Pressable
+                style={({ pressed }) => [
+                  styles.saveButton,
+                  (saving || loadingMetadata) ? styles.saveButtonDisabled : null,
+                  pressed && !(saving || loadingMetadata) ? styles.saveButtonPressed : null
+                ]}
+                onPress={onConfirm}
+                disabled={saving || loadingMetadata}
+              >
+                {saving ? <ActivityIndicator color="#FFFFFF" /> : <Text style={styles.saveText}>SAVE</Text>}
+              </Pressable>
+            </View>
           </View>
         </View>
       </View>
@@ -74,101 +105,117 @@ const styles = StyleSheet.create({
     backgroundColor: '#1D1D1D',
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
-    paddingHorizontal: 24,
-    paddingBottom: 16,
-    paddingTop: 8,
     borderTopWidth: 1,
-    borderColor: '#363636'
+    borderColor: '#363636',
+    paddingTop: 8,
+    paddingHorizontal: 24,
+    paddingBottom: 28
   },
   handle: {
     width: 46,
     height: 4,
     borderRadius: 100,
     backgroundColor: '#282828',
-    alignSelf: 'center',
-    marginBottom: 20
+    alignSelf: 'center'
+  },
+  content: {
+    marginTop: 16,
+    gap: 28
   },
   heading: {
     color: '#FFFFFF',
     fontSize: 16,
-    fontWeight: '600',
     lineHeight: 25,
-    marginBottom: 12,
-    textAlign: 'center'
+    textAlign: 'center',
+    fontFamily: 'Manrope_600SemiBold'
+  },
+  previewBlock: {
+    gap: 12
   },
   thumbnail: {
     width: '100%',
-    aspectRatio: 16 / 9,
+    aspectRatio: 1280 / 720,
     borderRadius: 12,
     backgroundColor: '#242424'
   },
+  thumbnailFallback: {
+    borderWidth: 1,
+    borderColor: '#303030'
+  },
+  textBlock: {
+    gap: 8
+  },
   title: {
-    color: '#F1F1F1',
+    color: '#FFFFFF',
     fontSize: 18,
     lineHeight: 25,
-    fontWeight: '600',
-    marginTop: 12
+    fontFamily: 'Manrope_600SemiBold'
   },
   timeRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
-    marginTop: 8
-  },
-  timeIcon: {
-    color: '#7C7C7C',
-    fontSize: 10,
-    lineHeight: 14,
-    fontWeight: '700'
+    gap: 4
   },
   time: {
     color: '#7C7C7C',
     fontSize: 14,
-    lineHeight: 20.3,
-    fontFamily: 'Manrope_500Medium'
+    lineHeight: 20.292,
+    fontFamily: 'SpaceMono_400Regular'
   },
   loaderRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    marginTop: 10
+    gap: 8
   },
   loaderText: {
-    color: '#9A9AA2'
+    color: '#9A9AA2',
+    fontSize: 14,
+    lineHeight: 20,
+    fontFamily: 'Manrope_500Medium'
   },
   actions: {
     flexDirection: 'row',
-    justifyContent: 'flex-end',
     alignItems: 'center',
-    gap: 16,
-    marginTop: 18
+    justifyContent: 'flex-end',
+    gap: 16
   },
   dismissButton: {
     borderRadius: 8,
     paddingHorizontal: 16,
     paddingVertical: 8
   },
+  dismissButtonPressed: {
+    backgroundColor: '#252525'
+  },
   dismissText: {
     color: '#A3A3A3',
     fontSize: 18,
     lineHeight: 24,
-    fontFamily: 'Manrope_500Medium'
+    fontFamily: 'SpaceMono_400Regular',
+    textTransform: 'uppercase'
   },
   saveButton: {
+    minWidth: 78,
     borderRadius: 8,
     borderWidth: 1,
     borderColor: '#ED1A43',
     backgroundColor: 'rgba(255, 27, 71, 0.4)',
     paddingHorizontal: 16,
     paddingVertical: 8,
-    minWidth: 77,
     alignItems: 'center',
     justifyContent: 'center'
+  },
+  saveButtonPressed: {
+    backgroundColor: 'rgba(255, 27, 71, 0.55)'
+  },
+  saveButtonDisabled: {
+    opacity: 0.7
   },
   saveText: {
     color: '#FFFFFF',
     fontSize: 18,
     lineHeight: 24,
-    fontFamily: 'Manrope_500Medium'
+    fontFamily: 'SpaceMono_400Regular',
+    textTransform: 'uppercase'
   }
 });

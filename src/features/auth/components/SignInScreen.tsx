@@ -1,22 +1,19 @@
 import React from 'react';
 import { ActivityIndicator, Pressable, SafeAreaView, StyleSheet, Text, View } from 'react-native';
-import { Asset } from 'expo-asset';
-import { SvgUri } from 'react-native-svg';
+
+import { AppLogoIcon, GoogleLogoIcon } from '../../../components/FigmaIcons';
 
 interface Props {
   loading: boolean;
   onSignIn: () => void;
 }
 
-const appLogoUri = Asset.fromModule(require('../../../../assets/images/figma/app_logo_figma.svg')).uri;
-const googleLogoUri = Asset.fromModule(require('../../../../assets/images/figma/google_logo_figma.svg')).uri;
-
 export function SignInScreen({ loading, onSignIn }: Props) {
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
         <View style={styles.hero}>
-          <SvgUri uri={appLogoUri} width={48.7063} height={48} />
+          <AppLogoIcon width={48.7063} height={48} />
           <View style={styles.textGroup}>
             <Text style={styles.title}>Never lose a moment.</Text>
             <Text style={styles.subtitle}>
@@ -30,7 +27,7 @@ export function SignInScreen({ loading, onSignIn }: Props) {
             <ActivityIndicator color="#FAFAFA" />
           ) : (
             <>
-              <SvgUri uri={googleLogoUri} width={19.198} height={19.52} />
+              <GoogleLogoIcon width={19.198} height={19.52} />
               <Text style={styles.buttonText}>CONTINUE WITH GOOGLE</Text>
             </>
           )}

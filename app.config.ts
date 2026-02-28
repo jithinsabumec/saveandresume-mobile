@@ -44,6 +44,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     },
     plugins: [
       ...(isProduction ? [] : ['expo-dev-client']),
+      'expo-video',
       [
         'expo-font',
         {

@@ -1,32 +1,30 @@
-import React from 'react';
-import { Alert, Image, Pressable, StyleSheet, Text, View } from 'react-native';
-import { Asset } from 'expo-asset';
-import { SvgUri } from 'react-native-svg';
+import React, { useRef } from 'react';
+import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { HomeCardMenuIcon, HomeTimestampIcon } from '../../../components/FigmaIcons';
 import type { FlattenedVideo } from '../../../types/domain';
 import { formatTime } from '../../../utils/formatTime';
+
+export interface MenuAnchorRect {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
 
 interface Props {
   item: FlattenedVideo;
   onOpen: (video: FlattenedVideo) => void;
-  onMove: (video: FlattenedVideo) => void;
-  onDelete: (video: FlattenedVideo) => void;
+  onOpenMenu: (video: FlattenedVideo, anchor: MenuAnchorRect) => void;
 }
 
-const homeMenuIconUri = Asset.fromModule(
-  require('../../../../assets/images/figma/home_card_menu_icon_figma.svg')
-).uri;
-const homeTimestampIconUri = Asset.fromModule(
-  require('../../../../assets/images/figma/home_timestamp_icon_figma.svg')
-).uri;
+export function TimestampCard({ item, onOpen, onOpenMenu }: Props) {
+  const menuButtonRef = useRef<View>(null);
 
-export function TimestampCard({ item, onOpen, onMove, onDelete }: Props) {
   const openActions = () => {
-    Alert.alert('Timestamp actions', 'Choose an action for this item.', [
-      { text: 'Move', onPress: () => onMove(item) },
-      { text: 'Delete', style: 'destructive', onPress: () => onDelete(item) },
-      { text: 'Cancel', style: 'cancel' }
-    ]);
+    menuButtonRef.current?.measureInWindow((x, y, width, height) => {
+      onOpenMenu(item, { x, y, width, height });
+    });
   };
 
   return (
@@ -36,15 +34,17 @@ export function TimestampCard({ item, onOpen, onMove, onDelete }: Props) {
         <View style={styles.body}>
           <Text style={styles.title} numberOfLines={2}>{item.title || 'Untitled video'}</Text>
           <View style={styles.metaRow}>
-            <SvgUri uri={homeTimestampIconUri} width={10} height={10} />
+            <HomeTimestampIcon width={10} height={10} />
             <Text style={styles.meta}>{formatTime(item.currentTime)}</Text>
           </View>
         </View>
       </Pressable>
 
-      <Pressable style={styles.menuButton} onPress={openActions} hitSlop={10}>
-        <SvgUri uri={homeMenuIconUri} width={27.8563} height={28} />
-      </Pressable>
+      <View collapsable={false} ref={menuButtonRef} style={styles.menuButtonAnchor}>
+        <Pressable style={styles.menuButton} onPress={openActions} hitSlop={10}>
+          <HomeCardMenuIcon width={27.8563} height={28} />
+        </Pressable>
+      </View>
     </View>
   );
 }
@@ -92,15 +92,17 @@ const styles = StyleSheet.create({
     color: '#7C7C7C',
     fontSize: 12,
     lineHeight: 20.3,
-    fontFamily: 'Manrope_500Medium'
+    fontFamily: 'SpaceMono_400Regular'
   },
   menuButton: {
-    position: 'absolute',
-    right: 3,
-    bottom: 7,
     width: 28,
     height: 28,
     alignItems: 'center',
     justifyContent: 'center'
+  },
+  menuButtonAnchor: {
+    position: 'absolute',
+    right: 3,
+    bottom: 7
   }
 });

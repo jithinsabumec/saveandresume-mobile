@@ -14,9 +14,8 @@ import {
   Text,
   View
 } from 'react-native';
-import { Asset } from 'expo-asset';
-import { SvgUri } from 'react-native-svg';
 
+import { HomeAddIcon, HomeEditIcon, HomeLogoIcon, HomeSignOutIcon } from '../../../components/FigmaIcons';
 import { stateRepository } from '../../../data/stateRepository';
 import { timestampsRepository } from '../../../data/timestampsRepository';
 import {
@@ -31,10 +30,10 @@ import { shareIntentService } from '../../../services/shareIntent';
 import type { FlattenedVideo, ShareParseSuccess } from '../../../types/domain';
 import { buildYouTubeWatchUrl, parseSharedTextForYouTubeTimestamp } from '../../../utils/youtubeParser';
 import { AddCategoryModal } from '../../categories/components/AddCategoryModal';
-import { MoveToCategoryModal } from '../../categories/components/MoveToCategoryModal';
 import { CategoryFilterBar } from '../components/CategoryFilterBar';
 import { EmptyState } from '../components/EmptyState';
-import { TimestampCard } from '../components/TimestampCard';
+import { TimestampActionsMenu } from '../components/TimestampActionsMenu';
+import { TimestampCard, type MenuAnchorRect } from '../components/TimestampCard';
 import { useLibraryState } from '../hooks/useLibraryState';
 import { ShareConfirmationModal } from '../../share/components/ShareConfirmationModal';
 import { MissingTimestampDialog } from '../../share/components/MissingTimestampDialog';
@@ -63,12 +62,6 @@ interface Props {
 }
 
 const ALL_FILTER = 'All';
-const homeLogoUri = Asset.fromModule(require('../../../../assets/images/figma/home_logo_figma.svg')).uri;
-const homeSignOutIconUri = Asset.fromModule(
-  require('../../../../assets/images/figma/home_signout_icon_figma.svg')
-).uri;
-const homeEditIconUri = Asset.fromModule(require('../../../../assets/images/figma/home_edit_icon_figma.svg')).uri;
-const homeAddIconUri = Asset.fromModule(require('../../../../assets/images/figma/home_add_icon_figma.svg')).uri;
 
 export function LibraryScreen({ userId, userEmail, userDisplayName, userPhotoUrl, onSignOut, signingOut }: Props) {
   const queryClient = useQueryClient();
@@ -76,13 +69,13 @@ export function LibraryScreen({ userId, userEmail, userDisplayName, userPhotoUrl
 
   const [selectedCategory, setSelectedCategory] = useState(ALL_FILTER);
   const [addCategoryOpen, setAddCategoryOpen] = useState(false);
-  const [moveVideo, setMoveVideo] = useState<FlattenedVideo | null>(null);
+  const [timestampMenu, setTimestampMenu] = useState<{ video: FlattenedVideo; anchor: MenuAnchorRect } | null>(null);
   const [pendingShare, setPendingShare] = useState<PendingShare | null>(null);
   const [missingTimestampNotice, setMissingTimestampNotice] = useState<MissingTimestampNotice | null>(null);
   const [savingShare, setSavingShare] = useState(false);
   const [processingShare, setProcessingShare] = useState(false);
   const [mutating, setMutating] = useState(false);
-  const [managingCategories, setManagingCategories] = useState(false);
+  const [editingCategories, setEditingCategories] = useState(false);
   const [avatarImageError, setAvatarImageError] = useState(false);
 
   const categories = data?.categories ?? { [DEFAULT_CATEGORY]: [] };
@@ -351,28 +344,45 @@ export function LibraryScreen({ userId, userEmail, userDisplayName, userPhotoUrl
     ]);
   }, [refreshState, userId]);
 
-  const handleMoveTimestamp = useCallback(async (targetCategory: string) => {
-    if (!moveVideo) return;
+  const handleOpenTimestampMenu = useCallback((video: FlattenedVideo, anchor: MenuAnchorRect) => {
+    setTimestampMenu({ video, anchor });
+  }, []);
 
+  const handleMoveTimestamp = useCallback(async (targetCategory: string) => {
+    if (!timestampMenu) {
+      return;
+    }
+
+    if (timestampMenu.video.category === targetCategory) {
+      setTimestampMenu(null);
+      return;
+    }
+
+    const video = timestampMenu.video;
+    setTimestampMenu(null);
     setMutating(true);
     try {
-      await stateRepository.moveTimestamp(userId, moveVideo.videoId, targetCategory);
+      await stateRepository.moveTimestamp(userId, video.videoId, targetCategory);
       await refreshState();
-      setMoveVideo(null);
       trackEvent('category_actions', {
         action: 'move_timestamp',
-        videoId: moveVideo.videoId,
+        videoId: video.videoId,
         category: targetCategory
       });
     } finally {
       setMutating(false);
     }
-  }, [moveVideo, refreshState, userId]);
+  }, [refreshState, timestampMenu, userId]);
 
   const handleAddCategory = useCallback(async (name: string) => {
     const trimmed = name.trim();
-    if (!trimmed || trimmed.toLowerCase() === 'all') {
-      setAddCategoryOpen(false);
+    if (!trimmed) {
+      Alert.alert('Category Name Required', 'Please enter a category name.');
+      return;
+    }
+
+    if (trimmed.toLowerCase() === 'all') {
+      Alert.alert('Name Not Allowed', 'The name "All" is reserved for the combined view.');
       return;
     }
 
@@ -411,7 +421,9 @@ export function LibraryScreen({ userId, userEmail, userDisplayName, userPhotoUrl
               setSelectedCategory(ALL_FILTER);
             }
             await refreshState();
-            setManagingCategories(false);
+            if (deletableCategories.length <= 1) {
+              setEditingCategories(false);
+            }
             trackEvent('category_actions', { action: 'delete_category', category });
           } finally {
             setMutating(false);
@@ -419,12 +431,12 @@ export function LibraryScreen({ userId, userEmail, userDisplayName, userPhotoUrl
         }
       }
     ]);
-  }, [refreshState, selectedCategory, userId]);
+  }, [deletableCategories.length, refreshState, selectedCategory, userId]);
 
   return (
     <SafeAreaView style={[styles.safeArea, { paddingTop: androidTopInset }]}>
       <View style={styles.header}>
-        <SvgUri uri={homeLogoUri} width={90.023} height={40.29} />
+        <HomeLogoIcon width={90.023} height={40.29} />
         <View style={styles.headerActions}>
           <View style={styles.avatar}>
             {userPhotoUrl && !avatarImageError ? (
@@ -441,7 +453,7 @@ export function LibraryScreen({ userId, userEmail, userDisplayName, userPhotoUrl
             {signingOut ? (
               <ActivityIndicator size="small" color="#D2D2D2" />
             ) : (
-              <SvgUri uri={homeSignOutIconUri} width={16} height={16} />
+              <HomeSignOutIcon width={16} height={16} />
             )}
           </Pressable>
         </View>
@@ -451,19 +463,27 @@ export function LibraryScreen({ userId, userEmail, userDisplayName, userPhotoUrl
         <View style={styles.categoriesHeader}>
           <Text style={styles.categoriesTitle}>Categories</Text>
           <View style={styles.categoriesHeaderActions}>
-            <Pressable
-              style={[
-                styles.categoryActionButton,
-                deletableCategories.length === 0 ? styles.categoryActionButtonDisabled : null
-              ]}
-              onPress={() => setManagingCategories((current) => !current)}
-              disabled={deletableCategories.length === 0}
-            >
-              <SvgUri uri={homeEditIconUri} width={14} height={14} />
-            </Pressable>
-            <Pressable style={styles.categoryActionButton} onPress={() => setAddCategoryOpen(true)}>
-              <SvgUri uri={homeAddIconUri} width={14} height={14} />
-            </Pressable>
+            {editingCategories ? (
+              <Pressable style={styles.saveCategoriesButton} onPress={() => setEditingCategories(false)}>
+                <Text style={styles.saveCategoriesButtonText}>Save</Text>
+              </Pressable>
+            ) : (
+              <>
+                <Pressable
+                  style={[
+                    styles.categoryActionButton,
+                    deletableCategories.length === 0 ? styles.categoryActionButtonDisabled : null
+                  ]}
+                  onPress={() => setEditingCategories(true)}
+                  disabled={deletableCategories.length === 0}
+                >
+                  <HomeEditIcon width={14} height={14} />
+                </Pressable>
+                <Pressable style={styles.categoryActionButton} onPress={() => setAddCategoryOpen(true)}>
+                  <HomeAddIcon width={14} height={14} />
+                </Pressable>
+              </>
+            )}
           </View>
         </View>
 
@@ -472,19 +492,11 @@ export function LibraryScreen({ userId, userEmail, userDisplayName, userPhotoUrl
           selected={selectedCategory}
           counts={counts}
           onSelect={setSelectedCategory}
+          editMode={editingCategories}
+          lockedCategories={[ALL_FILTER, DEFAULT_CATEGORY]}
+          onDeleteCategory={handleDeleteCategory}
         />
       </View>
-
-      {managingCategories && deletableCategories.length > 0 ? (
-        <View style={styles.manageRow}>
-          {deletableCategories.map((category) => (
-            <Pressable key={category} style={styles.manageChip} onPress={() => handleDeleteCategory(category)}>
-              <Text style={styles.manageChipText}>{category}</Text>
-              <Text style={styles.manageChipIcon}>x</Text>
-            </Pressable>
-          ))}
-        </View>
-      ) : null}
 
       {error ? <Text style={styles.errorText}>Failed to load timestamps. Pull to retry.</Text> : null}
 
@@ -500,8 +512,7 @@ export function LibraryScreen({ userId, userEmail, userDisplayName, userPhotoUrl
           <TimestampCard
             item={item}
             onOpen={handleOpenVideo}
-            onMove={(video) => setMoveVideo(video)}
-            onDelete={handleDeleteTimestamp}
+            onOpenMenu={handleOpenTimestampMenu}
           />
         )}
       />
@@ -512,12 +523,22 @@ export function LibraryScreen({ userId, userEmail, userDisplayName, userPhotoUrl
         onSubmit={(name) => void handleAddCategory(name)}
       />
 
-      <MoveToCategoryModal
-        visible={Boolean(moveVideo)}
+      <TimestampActionsMenu
+        visible={Boolean(timestampMenu)}
+        anchor={timestampMenu?.anchor ?? null}
+        video={timestampMenu?.video ?? null}
         categories={categoryNames}
-        currentCategory={moveVideo?.category ?? DEFAULT_CATEGORY}
-        onClose={() => setMoveVideo(null)}
+        onClose={() => setTimestampMenu(null)}
         onMove={(target) => void handleMoveTimestamp(target)}
+        onDelete={() => {
+          if (!timestampMenu) {
+            return;
+          }
+
+          const video = timestampMenu.video;
+          setTimestampMenu(null);
+          handleDeleteTimestamp(video);
+        }}
       />
 
       <ShareConfirmationModal
@@ -573,17 +594,17 @@ const styles = StyleSheet.create({
     gap: 4
   },
   avatar: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     backgroundColor: '#8D7AEF',
     alignItems: 'center',
     justifyContent: 'center'
   },
   avatarImage: {
-    width: 28,
-    height: 28,
-    borderRadius: 14
+    width: 36,
+    height: 36,
+    borderRadius: 18
   },
   avatarText: {
     color: '#FFFFFF',
@@ -592,9 +613,9 @@ const styles = StyleSheet.create({
     fontFamily: 'Manrope_600SemiBold'
   },
   headerIconButton: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     borderWidth: 1,
     borderColor: '#585864',
     backgroundColor: '#474750',
@@ -636,37 +657,21 @@ const styles = StyleSheet.create({
   categoryActionButtonDisabled: {
     opacity: 0.45
   },
-  manageRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-    paddingHorizontal: 16,
-    paddingTop: 8,
-    paddingBottom: 4
-  },
-  manageChip: {
-    backgroundColor: '#34121A',
-    borderColor: '#81273B',
-    borderWidth: 1,
-    borderRadius: 99,
-    paddingHorizontal: 10,
+  saveCategoriesButton: {
     minHeight: 28,
-    flexDirection: 'row',
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: '#C61743',
+    backgroundColor: '#83112E',
     alignItems: 'center',
-    gap: 6
+    justifyContent: 'center',
+    paddingHorizontal: 10
   },
-  manageChipText: {
-    color: '#F3B4C1',
-    fontSize: 13,
-    fontWeight: '600',
-    fontFamily: 'Manrope_600SemiBold'
-  },
-  manageChipIcon: {
-    color: '#F3B4C1',
-    fontSize: 12,
-    lineHeight: 12,
-    fontWeight: '600',
-    fontFamily: 'Manrope_600SemiBold'
+  saveCategoriesButtonText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    lineHeight: 20,
+    fontFamily: 'Manrope_500Medium'
   },
   errorText: {
     color: '#F3A3B6',

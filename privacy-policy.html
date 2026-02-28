@@ -1,0 +1,252 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Privacy Policy - Save &amp; Resume</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #0b0b0b;
+        --panel: #171717;
+        --panel-2: #1f1f1f;
+        --text: #f3f3f3;
+        --muted: #b3b3b3;
+        --line: #2f2f2f;
+        --accent: #ed1a43;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family: Manrope, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        background: radial-gradient(circle at top, #151515 0%, var(--bg) 46%);
+        color: var(--text);
+        line-height: 1.65;
+      }
+
+      .wrap {
+        width: min(860px, calc(100% - 32px));
+        margin: 40px auto;
+      }
+
+      .card {
+        background: linear-gradient(180deg, var(--panel) 0%, var(--panel-2) 100%);
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        padding: 32px 24px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+      }
+
+      h1,
+      h2 {
+        margin: 0 0 12px;
+        line-height: 1.2;
+      }
+
+      h1 {
+        font-size: clamp(28px, 4vw, 40px);
+      }
+
+      h2 {
+        font-size: 20px;
+        margin-top: 28px;
+      }
+
+      p,
+      li {
+        color: var(--muted);
+        font-size: 16px;
+      }
+
+      p strong,
+      li strong {
+        color: var(--text);
+      }
+
+      .meta {
+        display: inline-block;
+        margin: 8px 0 20px;
+        padding: 8px 12px;
+        border-radius: 999px;
+        border: 1px solid #3a3a3a;
+        color: var(--text);
+        background: rgba(237, 26, 67, 0.08);
+      }
+
+      .note {
+        padding: 14px 16px;
+        border-radius: 12px;
+        border: 1px solid #3a3a3a;
+        background: rgba(255, 255, 255, 0.03);
+      }
+
+      a {
+        color: #ff6a88;
+      }
+
+      ul {
+        margin: 0;
+        padding-left: 20px;
+      }
+
+      code {
+        font-family: "Space Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+        color: var(--text);
+      }
+    </style>
+  </head>
+  <body>
+    <main class="wrap">
+      <section class="card">
+        <h1>Privacy Policy</h1>
+        <p>
+          This Privacy Policy applies to the <strong>Save &amp; Resume</strong> mobile app
+          (also displayed in some builds as <strong>Timestamp Saver</strong>).
+        </p>
+        <div class="meta">Effective date: February 27, 2026</div>
+
+        <p>
+          Save &amp; Resume helps users save YouTube timestamps, organize them into categories,
+          and reopen videos later at the saved moment. This policy explains, in simple terms,
+          what data the app handles, how that data is used, and when that data is shared.
+        </p>
+
+        <div class="note">
+          <p>
+            <strong>Important:</strong> Google Play requires this policy to be posted at a
+            public web address. This HTML file is the policy text itself, but you still need
+            to host it on a public URL before adding it to Play Console.
+          </p>
+        </div>
+
+        <h2>1. Information We Collect</h2>
+        <p>The app may handle the following information:</p>
+        <ul>
+          <li>
+            <strong>Google account information:</strong> if you sign in with Google, the app
+            may receive basic account information such as your name, email address, profile
+            photo, and account identifier through Google Sign-In and Firebase Authentication.
+          </li>
+          <li>
+            <strong>Saved timestamp data:</strong> the app stores the YouTube video ID, source
+            link, timestamp values, formatted timestamp text, category assignments, optional
+            notes, and related save dates.
+          </li>
+          <li>
+            <strong>Shared link content:</strong> when you share a YouTube link to the app from
+            Android, the app reads the text you shared so it can extract the video link and
+            timestamp.
+          </li>
+          <li>
+            <strong>Video metadata:</strong> the app may request a YouTube video title and
+            thumbnail image so the saved entry can be shown properly in the app.
+          </li>
+          <li>
+            <strong>Basic diagnostic information:</strong> the app currently uses basic local
+            console logging for troubleshooting during app operation. It does not currently use
+            a dedicated third-party analytics or crash-reporting service in the mobile codebase.
+          </li>
+        </ul>
+
+        <h2>2. How We Use Information</h2>
+        <p>We use the information above to:</p>
+        <ul>
+          <li>sign you in and keep your account session active,</li>
+          <li>save and organize your YouTube timestamps and categories,</li>
+          <li>show video titles and thumbnails for the links you save,</li>
+          <li>open YouTube again at the correct saved time, and</li>
+          <li>maintain and troubleshoot the app.</li>
+        </ul>
+
+        <h2>3. Where Your Information Is Stored</h2>
+        <p>
+          Saved account and timestamp data is stored using <strong>Firebase</strong>, including
+          Firebase Authentication and Cloud Firestore. This means your saved information may be
+          processed and stored on infrastructure operated by Google or Google-affiliated service
+          providers.
+        </p>
+
+        <h2>4. Third-Party Services and Sharing</h2>
+        <p>
+          The app uses third-party services that may process certain data in order for the app
+          to work:
+        </p>
+        <ul>
+          <li>
+            <strong>Google Sign-In and Firebase Authentication:</strong> used to authenticate
+            users.
+          </li>
+          <li>
+            <strong>Firebase Cloud Firestore:</strong> used to store saved timestamps,
+            categories, and related app state.
+          </li>
+          <li>
+            <strong>YouTube endpoints:</strong> used to fetch video title and thumbnail
+            information for a shared YouTube link.
+          </li>
+        </ul>
+        <p>
+          We do <strong>not</strong> sell your personal information. We do <strong>not</strong>
+          include a mobile advertising SDK in the current app codebase.
+        </p>
+
+        <h2>5. Data Retention and Deletion</h2>
+        <p>
+          We keep your saved timestamp data for as long as it remains in your account or until
+          it is deleted. Inside the app, you can delete timestamps and categories directly.
+          Signing out of the app does not automatically erase data already stored in your
+          account.
+        </p>
+        <p>
+          If you want to request deletion of account-related data that is not removable inside
+          the app, use the developer contact method listed on the Google Play Store page for
+          Save &amp; Resume.
+        </p>
+
+        <h2>6. Security</h2>
+        <p>
+          We rely on the security features of Google Sign-In, Firebase Authentication, Cloud
+          Firestore, and standard secure web connections to help protect data in transit. No
+          method of electronic storage or transmission is completely secure, so absolute
+          security cannot be guaranteed.
+        </p>
+
+        <h2>7. Children’s Privacy</h2>
+        <p>
+          Save &amp; Resume is not intended for children under 13. We do not knowingly collect
+          personal information from children under 13 through this app.
+        </p>
+
+        <h2>8. International Data Processing</h2>
+        <p>
+          Because the app uses Google and Firebase services, your information may be processed
+          in countries other than your own, depending on how those services operate.
+        </p>
+
+        <h2>9. Changes to This Policy</h2>
+        <p>
+          We may update this Privacy Policy from time to time. When we do, we will update the
+          effective date shown at the top of this page.
+        </p>
+
+        <h2>10. Contact</h2>
+        <p>
+          For privacy questions, data deletion requests, or other policy-related inquiries,
+          please use the developer contact information provided on the Google Play Store listing
+          for <strong>Save &amp; Resume</strong>.
+        </p>
+
+        <h2>11. Third-Party Privacy Policies</h2>
+        <p>
+          Third-party services used by the app may have their own privacy policies. You can
+          review Google’s privacy information here:
+          <a href="https://policies.google.com/privacy">https://policies.google.com/privacy</a>
+        </p>
+      </section>
+    </main>
+  </body>
+</html>
