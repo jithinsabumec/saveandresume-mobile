@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Delete Account - Save &amp; Resume</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #0b0b0b;
+        --panel: #171717;
+        --panel-2: #1f1f1f;
+        --text: #f3f3f3;
+        --muted: #b3b3b3;
+        --line: #2f2f2f;
+        --accent: #ed1a43;
+        --warning: #ffb700;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family: Manrope, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        background: radial-gradient(circle at top, #151515 0%, var(--bg) 46%);
+        color: var(--text);
+        line-height: 1.65;
+      }
+
+      .wrap {
+        width: min(860px, calc(100% - 32px));
+        margin: 40px auto;
+      }
+
+      .card {
+        background: linear-gradient(180deg, var(--panel) 0%, var(--panel-2) 100%);
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        padding: 32px 24px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+      }
+
+      h1,
+      h2 {
+        margin: 0 0 12px;
+        line-height: 1.2;
+      }
+
+      h1 {
+        font-size: clamp(28px, 4vw, 40px);
+      }
+
+      h2 {
+        font-size: 20px;
+        margin-top: 28px;
+      }
+
+      p,
+      li {
+        color: var(--muted);
+        font-size: 16px;
+      }
+
+      p strong,
+      li strong {
+        color: var(--text);
+      }
+
+      .meta {
+        display: inline-block;
+        margin: 8px 0 20px;
+        padding: 8px 12px;
+        border-radius: 999px;
+        border: 1px solid #3a3a3a;
+        color: var(--text);
+        background: rgba(237, 26, 67, 0.08);
+      }
+
+      .note,
+      .warning {
+        padding: 14px 16px;
+        border-radius: 12px;
+        border: 1px solid #3a3a3a;
+        background: rgba(255, 255, 255, 0.03);
+        margin: 16px 0;
+      }
+
+      .warning {
+        border-color: rgba(255, 183, 0, 0.35);
+        background: rgba(255, 183, 0, 0.08);
+      }
+
+      .steps {
+        display: grid;
+        gap: 12px;
+        margin-top: 16px;
+      }
+
+      .step {
+        padding: 16px;
+        border-radius: 14px;
+        border: 1px solid var(--line);
+        background: rgba(255, 255, 255, 0.03);
+      }
+
+      .step strong {
+        display: block;
+        margin-bottom: 4px;
+        color: var(--text);
+      }
+
+      a {
+        color: #ff6a88;
+      }
+
+      ul {
+        margin: 0;
+        padding-left: 20px;
+      }
+
+      code {
+        font-family: "Space Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+        color: var(--text);
+      }
+    </style>
+  </head>
+  <body>
+    <main class="wrap">
+      <section class="card">
+        <h1>Delete Your Account</h1>
+        <p>
+          This page explains how users of <strong>Save &amp; Resume</strong> (also shown in some
+          builds as <strong>Timestamp Saver</strong>) can request deletion of their app account
+          and associated data.
+        </p>
+        <div class="meta">Last updated: February 28, 2026</div>
+
+        <div class="note">
+          <p>
+            <strong>Important:</strong> This process deletes your <strong>Save &amp; Resume app
+            account and app data</strong>. It does <strong>not</strong> delete your Google account.
+          </p>
+        </div>
+
+        <h2>How to Request Deletion</h2>
+        <div class="steps">
+          <div class="step">
+            <strong>Step 1</strong>
+            Find the developer contact email shown on the Google Play Store listing for
+            <strong>Save &amp; Resume</strong>.
+          </div>
+          <div class="step">
+            <strong>Step 2</strong>
+            Send an email with the subject line:
+            <code>Delete my Save &amp; Resume account</code>
+          </div>
+          <div class="step">
+            <strong>Step 3</strong>
+            In the email, include the Google email address you used to sign in to the app so we
+            can identify the correct account.
+          </div>
+          <div class="step">
+            <strong>Step 4</strong>
+            We will process the deletion request and remove the associated app account data.
+          </div>
+        </div>
+
+        <div class="warning">
+          <p>
+            <strong>Please do not send passwords.</strong> Only send the email address used to sign
+            in to the app and a clear deletion request.
+          </p>
+        </div>
+
+        <h2>What Data Will Be Deleted</h2>
+        <ul>
+          <li>your app account record used for Save &amp; Resume,</li>
+          <li>saved YouTube timestamps,</li>
+          <li>categories you created,</li>
+          <li>optional notes attached to saved timestamps, and</li>
+          <li>related app profile data stored for your use of Save &amp; Resume.</li>
+        </ul>
+
+        <h2>What Data May Be Kept</h2>
+        <p>
+          We may keep limited records only when reasonably necessary for legal compliance,
+          security, fraud prevention, abuse prevention, or to document that a deletion request was
+          completed.
+        </p>
+
+        <h2>Retention Period</h2>
+        <p>
+          Account and app data requested for deletion will be deleted within a reasonable period
+          after the request is verified. Limited records kept for legal or security reasons may be
+          retained only for as long as necessary for those purposes.
+        </p>
+
+        <h2>Delete Some Data Without Deleting the Full Account</h2>
+        <p>
+          Inside the app, users can already remove individual timestamps and categories without
+          deleting the full account.
+        </p>
+
+        <h2>Related Privacy Information</h2>
+        <p>
+          For more details about how Save &amp; Resume handles user information, see the
+          <a href="./privacy-policy.html">Privacy Policy</a>.
+        </p>
+      </section>
+    </main>
+  </body>
+</html>

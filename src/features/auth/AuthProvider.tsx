@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import type { User } from 'firebase/auth';
 
+import { accountRepository } from '../../data/accountRepository';
 import { authService } from '../../services/authService';
 
 interface AuthContextValue {
@@ -8,8 +9,10 @@ interface AuthContextValue {
   initializing: boolean;
   signingIn: boolean;
   signingOut: boolean;
+  deletingAccount: boolean;
   signIn: () => Promise<void>;
   signOut: () => Promise<void>;
+  deleteAccount: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -19,6 +22,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [initializing, setInitializing] = useState(true);
   const [signingIn, setSigningIn] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
+  const [deletingAccount, setDeletingAccount] = useState(false);
 
   useEffect(() => {
     const unsubscribe = authService.onAuthStateChanged((nextUser) => {
@@ -35,6 +39,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       initializing,
       signingIn,
       signingOut,
+      deletingAccount,
       signIn: async () => {
         setSigningIn(true);
         try {
@@ -50,9 +55,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         } finally {
           setSigningOut(false);
         }
+      },
+      deleteAccount: async () => {
+        const currentUser = authService.getCurrentUser();
+        if (!currentUser) {
+          throw new Error('You are no longer signed in.');
+        }
+
+        setDeletingAccount(true);
+        try {
+          await authService.reauthenticateWithGoogle(currentUser);
+          await accountRepository.deleteAccountData(currentUser.uid);
+          await authService.deleteCurrentUser(currentUser);
+        } finally {
+          setDeletingAccount(false);
+        }
       }
     }),
-    [initializing, signingIn, signingOut, user]
+    [deletingAccount, initializing, signingIn, signingOut, user]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

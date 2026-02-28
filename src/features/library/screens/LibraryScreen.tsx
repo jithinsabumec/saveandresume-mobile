@@ -1,5 +1,5 @@
 import { useQueryClient } from '@tanstack/react-query';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -15,7 +15,7 @@ import {
   View
 } from 'react-native';
 
-import { HomeAddIcon, HomeEditIcon, HomeLogoIcon, HomeSignOutIcon } from '../../../components/FigmaIcons';
+import { HomeAddIcon, HomeEditIcon, HomeLogoIcon } from '../../../components/FigmaIcons';
 import { stateRepository } from '../../../data/stateRepository';
 import { timestampsRepository } from '../../../data/timestampsRepository';
 import {
@@ -30,6 +30,7 @@ import { shareIntentService } from '../../../services/shareIntent';
 import type { FlattenedVideo, ShareParseSuccess } from '../../../types/domain';
 import { buildYouTubeWatchUrl, parseSharedTextForYouTubeTimestamp } from '../../../utils/youtubeParser';
 import { AddCategoryModal } from '../../categories/components/AddCategoryModal';
+import { AccountActionsMenu } from '../components/AccountActionsMenu';
 import { CategoryFilterBar } from '../components/CategoryFilterBar';
 import { EmptyState } from '../components/EmptyState';
 import { TimestampActionsMenu } from '../components/TimestampActionsMenu';
@@ -58,17 +59,29 @@ interface Props {
   userDisplayName: string | null;
   userPhotoUrl: string | null;
   onSignOut: () => Promise<void>;
+  onDeleteAccount: () => Promise<void>;
   signingOut: boolean;
+  deletingAccount: boolean;
 }
 
 const ALL_FILTER = 'All';
 
-export function LibraryScreen({ userId, userEmail, userDisplayName, userPhotoUrl, onSignOut, signingOut }: Props) {
+export function LibraryScreen({
+  userId,
+  userEmail,
+  userDisplayName,
+  userPhotoUrl,
+  onSignOut,
+  onDeleteAccount,
+  signingOut,
+  deletingAccount
+}: Props) {
   const queryClient = useQueryClient();
   const { data, isLoading, error } = useLibraryState(userId);
 
   const [selectedCategory, setSelectedCategory] = useState(ALL_FILTER);
   const [addCategoryOpen, setAddCategoryOpen] = useState(false);
+  const [accountMenuAnchor, setAccountMenuAnchor] = useState<MenuAnchorRect | null>(null);
   const [timestampMenu, setTimestampMenu] = useState<{ video: FlattenedVideo; anchor: MenuAnchorRect } | null>(null);
   const [pendingShare, setPendingShare] = useState<PendingShare | null>(null);
   const [missingTimestampNotice, setMissingTimestampNotice] = useState<MissingTimestampNotice | null>(null);
@@ -77,6 +90,7 @@ export function LibraryScreen({ userId, userEmail, userDisplayName, userPhotoUrl
   const [mutating, setMutating] = useState(false);
   const [editingCategories, setEditingCategories] = useState(false);
   const [avatarImageError, setAvatarImageError] = useState(false);
+  const avatarButtonRef = useRef<View>(null);
 
   const categories = data?.categories ?? { [DEFAULT_CATEGORY]: [] };
 
@@ -348,6 +362,48 @@ export function LibraryScreen({ userId, userEmail, userDisplayName, userPhotoUrl
     setTimestampMenu({ video, anchor });
   }, []);
 
+  const handleOpenAccountMenu = useCallback(() => {
+    if (signingOut || deletingAccount) {
+      return;
+    }
+
+    avatarButtonRef.current?.measureInWindow((x, y, width, height) => {
+      setAccountMenuAnchor({ x, y, width, height });
+    });
+  }, [deletingAccount, signingOut]);
+
+  const handleRequestSignOut = useCallback(() => {
+    setAccountMenuAnchor(null);
+    Alert.alert('Log Out', 'Are you sure you want to log out?', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Log Out',
+        style: 'destructive',
+        onPress: () => {
+          void onSignOut().catch(() => undefined);
+        }
+      }
+    ]);
+  }, [onSignOut]);
+
+  const handleRequestDeleteAccount = useCallback(() => {
+    setAccountMenuAnchor(null);
+    Alert.alert(
+      'Delete Account',
+      'Delete your account and permanently remove your saved timestamps and categories? This cannot be undone.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete account',
+          style: 'destructive',
+          onPress: () => {
+            void onDeleteAccount().catch(() => undefined);
+          }
+        }
+      ]
+    );
+  }, [onDeleteAccount]);
+
   const handleMoveTimestamp = useCallback(async (targetCategory: string) => {
     if (!timestampMenu) {
       return;
@@ -438,24 +494,29 @@ export function LibraryScreen({ userId, userEmail, userDisplayName, userPhotoUrl
       <View style={styles.header}>
         <HomeLogoIcon width={90.023} height={40.29} />
         <View style={styles.headerActions}>
-          <View style={styles.avatar}>
-            {userPhotoUrl && !avatarImageError ? (
-              <Image
-                source={{ uri: userPhotoUrl }}
-                style={styles.avatarImage}
-                onError={() => setAvatarImageError(true)}
-              />
-            ) : (
-              <Text style={styles.avatarText}>{userInitial}</Text>
-            )}
+          <View collapsable={false} ref={avatarButtonRef}>
+            <Pressable
+              style={({ pressed }) => [
+                styles.avatarButton,
+                pressed ? styles.avatarButtonPressed : null,
+                signingOut || deletingAccount ? styles.avatarButtonDisabled : null
+              ]}
+              onPress={handleOpenAccountMenu}
+              disabled={signingOut || deletingAccount}
+            >
+              <View style={styles.avatar}>
+                {userPhotoUrl && !avatarImageError ? (
+                  <Image
+                    source={{ uri: userPhotoUrl }}
+                    style={styles.avatarImage}
+                    onError={() => setAvatarImageError(true)}
+                  />
+                ) : (
+                  <Text style={styles.avatarText}>{userInitial}</Text>
+                )}
+              </View>
+            </Pressable>
           </View>
-          <Pressable style={styles.headerIconButton} onPress={() => void onSignOut()} disabled={signingOut}>
-            {signingOut ? (
-              <ActivityIndicator size="small" color="#D2D2D2" />
-            ) : (
-              <HomeSignOutIcon width={16} height={16} />
-            )}
-          </Pressable>
         </View>
       </View>
 
@@ -541,6 +602,14 @@ export function LibraryScreen({ userId, userEmail, userDisplayName, userPhotoUrl
         }}
       />
 
+      <AccountActionsMenu
+        visible={Boolean(accountMenuAnchor)}
+        anchor={accountMenuAnchor}
+        onClose={() => setAccountMenuAnchor(null)}
+        onSignOut={handleRequestSignOut}
+        onDeleteAccount={handleRequestDeleteAccount}
+      />
+
       <ShareConfirmationModal
         visible={Boolean(pendingShare)}
         videoId={pendingShare?.parsed.videoId ?? ''}
@@ -563,11 +632,13 @@ export function LibraryScreen({ userId, userEmail, userDisplayName, userPhotoUrl
         onGoToYoutube={handleGoToYouTubeFromDialog}
       />
 
-      {processingShare ? (
+      {processingShare || signingOut || deletingAccount ? (
         <View style={styles.processingOverlay}>
           <View style={styles.processingCard}>
             <ActivityIndicator color="#ED1A43" />
-            <Text style={styles.processingText}>Saving shared video...</Text>
+            <Text style={styles.processingText}>
+              {deletingAccount ? 'Deleting account...' : signingOut ? 'Logging out...' : 'Saving shared video...'}
+            </Text>
           </View>
         </View>
       ) : null}
@@ -593,6 +664,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 4
   },
+  avatarButton: {
+    borderRadius: 22,
+    padding: 2
+  },
+  avatarButtonPressed: {
+    backgroundColor: '#1B1B1B'
+  },
+  avatarButtonDisabled: {
+    opacity: 0.7
+  },
   avatar: {
     width: 36,
     height: 36,
@@ -611,16 +692,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '600',
     fontFamily: 'Manrope_600SemiBold'
-  },
-  headerIconButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    borderWidth: 1,
-    borderColor: '#585864',
-    backgroundColor: '#474750',
-    alignItems: 'center',
-    justifyContent: 'center'
   },
   categoriesSection: {
     marginTop: 36,
