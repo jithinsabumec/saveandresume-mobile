@@ -1,5 +1,5 @@
-import React, { useEffect } from 'react';
-import { useVideoPlayer, VideoView } from 'expo-video';
+import { ResizeMode, Video } from 'expo-av';
+import React, { useEffect, useRef } from 'react';
 import { Image, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 
@@ -34,21 +34,29 @@ function SavedTimestampIcon({ color = '#FFFFFF', size = 14 }: { color?: string; 
 }
 
 export function MissingTimestampDialog({ visible, title, thumbnailUrl, onDismiss, onGoToYoutube }: Props) {
-  const player = useVideoPlayer(previewVideoSource, (videoPlayer) => {
-    videoPlayer.loop = true;
-    videoPlayer.muted = true;
-  });
+  const videoRef = useRef<Video | null>(null);
 
   useEffect(() => {
-    if (visible) {
-      player.currentTime = 0;
-      player.play();
-      return;
-    }
+    const syncPreviewPlayback = async () => {
+      const video = videoRef.current;
+      if (!video) {
+        return;
+      }
 
-    player.pause();
-    player.currentTime = 0;
-  }, [player, visible]);
+      try {
+        if (visible) {
+          await video.replayAsync();
+          return;
+        }
+
+        await video.stopAsync();
+      } catch {
+        // Ignore transient playback errors while the modal mounts or hides.
+      }
+    };
+
+    void syncPreviewPlayback();
+  }, [visible]);
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onDismiss} statusBarTranslucent>
@@ -112,12 +120,15 @@ export function MissingTimestampDialog({ visible, title, thumbnailUrl, onDismiss
 
                 <View style={styles.videoShadow}>
                   <View style={styles.videoFrame}>
-                    <VideoView
+                    <Video
+                      ref={videoRef}
                       style={styles.video}
-                      player={player}
-                      nativeControls={false}
-                      allowsFullscreen={false}
-                      contentFit="cover"
+                      source={previewVideoSource}
+                      shouldPlay={visible}
+                      isLooping
+                      isMuted
+                      useNativeControls={false}
+                      resizeMode={ResizeMode.COVER}
                     />
                   </View>
                 </View>
