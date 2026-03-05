@@ -6,7 +6,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
 
   return {
     ...config,
-    name: 'Timestamp Saver',
+    name: 'Save & Resume',
     slug: 'save-and-resume',
     owner: 'jihtinsabu-organization',
     scheme: 'timestampsaver',

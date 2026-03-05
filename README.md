@@ -1,4 +1,4 @@
-# Timestamp Saver Mobile
+# Save & Resume Mobile
 
 Expo custom-dev-client React Native app for saving YouTube timestamps from Android share sheet and syncing with the existing `Save & Resume` Firestore schema.
 

@@ -83,10 +83,11 @@ export function CategoryFilterBar({
 
 const styles = StyleSheet.create({
   scroll: {
-    maxHeight: 36
+    maxHeight: 42
   },
   container: {
     paddingHorizontal: 16,
+    paddingBottom: 6,
     gap: 4.8,
     alignItems: 'center'
   },
@@ -94,6 +95,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     paddingHorizontal: 16,
+    paddingBottom: 6,
     gap: 8,
     alignItems: 'center'
   },

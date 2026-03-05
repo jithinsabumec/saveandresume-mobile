@@ -1,5 +1,5 @@
 import React, { useRef } from 'react';
-import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Image, Pressable, StyleSheet, Text, View, type GestureResponderEvent } from 'react-native';
 
 import { HomeCardMenuIcon, HomeTimestampIcon } from '../../../components/FigmaIcons';
 import type { FlattenedVideo } from '../../../types/domain';
@@ -18,10 +18,24 @@ interface Props {
   onOpenMenu: (video: FlattenedVideo, anchor: MenuAnchorRect) => void;
 }
 
+const MENU_BUTTON_SIZE = 28;
+
 export function TimestampCard({ item, onOpen, onOpenMenu }: Props) {
   const menuButtonRef = useRef<View>(null);
 
-  const openActions = () => {
+  const openActions = (event: GestureResponderEvent) => {
+    const { pageX, pageY } = event.nativeEvent;
+
+    if (Number.isFinite(pageX) && Number.isFinite(pageY)) {
+      onOpenMenu(item, {
+        x: pageX - MENU_BUTTON_SIZE / 2,
+        y: pageY - MENU_BUTTON_SIZE / 2,
+        width: MENU_BUTTON_SIZE,
+        height: MENU_BUTTON_SIZE
+      });
+      return;
+    }
+
     menuButtonRef.current?.measureInWindow((x, y, width, height) => {
       onOpenMenu(item, { x, y, width, height });
     });

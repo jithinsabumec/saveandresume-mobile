@@ -695,7 +695,8 @@ const styles = StyleSheet.create({
   },
   categoriesSection: {
     marginTop: 36,
-    gap: 9.5
+    gap: 9.5,
+    paddingBottom: 10
   },
   categoriesHeader: {
     marginHorizontal: 16,

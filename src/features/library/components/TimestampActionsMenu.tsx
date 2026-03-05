@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
 import {
   Pressable,
   ScrollView,
@@ -26,6 +26,9 @@ const MENU_WIDTH = 220;
 const SCREEN_PADDING = 12;
 const MENU_OFFSET = 6;
 const MAX_CATEGORY_LIST_HEIGHT = 240;
+const MIN_VISIBLE_MENU_HEIGHT = 96;
+const MENU_CHROME_HEIGHT = 72;
+const MIN_CATEGORY_LIST_HEIGHT = 40;
 
 function clamp(value: number, min: number, max: number) {
   return Math.min(Math.max(value, min), max);
@@ -41,14 +44,24 @@ export function TimestampActionsMenu({
   onDelete
 }: Props) {
   const { width: screenWidth, height: screenHeight } = useWindowDimensions();
-  const [menuHeight, setMenuHeight] = useState(0);
 
-  const menuPosition = useMemo(() => {
+  const menuLayout = useMemo(() => {
+    const fallbackMaxHeight = Math.max(MIN_VISIBLE_MENU_HEIGHT, screenHeight - SCREEN_PADDING * 2);
+    const fallbackCategoryHeight = clamp(
+      fallbackMaxHeight - MENU_CHROME_HEIGHT,
+      MIN_CATEGORY_LIST_HEIGHT,
+      MAX_CATEGORY_LIST_HEIGHT
+    );
+
     if (!anchor) {
-      return { left: SCREEN_PADDING, top: SCREEN_PADDING };
+      return {
+        left: SCREEN_PADDING,
+        top: SCREEN_PADDING,
+        menuMaxHeight: fallbackMaxHeight,
+        categoryListMaxHeight: fallbackCategoryHeight
+      };
     }
 
-    const estimatedHeight = menuHeight || 220;
     const left = clamp(
       anchor.x + anchor.width - MENU_WIDTH,
       SCREEN_PADDING,
@@ -56,15 +69,21 @@ export function TimestampActionsMenu({
     );
 
     const belowTop = anchor.y + anchor.height + MENU_OFFSET;
-    const aboveTop = anchor.y - estimatedHeight - MENU_OFFSET;
-    const preferredTop =
-      belowTop + estimatedHeight <= screenHeight - SCREEN_PADDING ? belowTop : Math.max(SCREEN_PADDING, aboveTop);
+    const top = Math.max(SCREEN_PADDING, belowTop);
+    const menuMaxHeight = Math.max(MIN_VISIBLE_MENU_HEIGHT, screenHeight - top - SCREEN_PADDING);
+    const categoryListMaxHeight = clamp(
+      menuMaxHeight - MENU_CHROME_HEIGHT,
+      MIN_CATEGORY_LIST_HEIGHT,
+      MAX_CATEGORY_LIST_HEIGHT
+    );
 
     return {
       left,
-      top: clamp(preferredTop, SCREEN_PADDING, Math.max(SCREEN_PADDING, screenHeight - estimatedHeight - SCREEN_PADDING))
+      top,
+      menuMaxHeight,
+      categoryListMaxHeight
     };
-  }, [anchor, menuHeight, screenHeight, screenWidth]);
+  }, [anchor, screenHeight, screenWidth]);
 
   if (!visible || !video) {
     return null;
@@ -77,15 +96,15 @@ export function TimestampActionsMenu({
         style={[
           styles.menu,
           {
-            left: menuPosition.left,
-            top: menuPosition.top,
-            width: Math.min(MENU_WIDTH, screenWidth - SCREEN_PADDING * 2)
+            left: menuLayout.left,
+            top: menuLayout.top,
+            width: Math.min(MENU_WIDTH, screenWidth - SCREEN_PADDING * 2),
+            maxHeight: menuLayout.menuMaxHeight
           }
         ]}
-        onLayout={(event) => setMenuHeight(event.nativeEvent.layout.height)}
       >
         <ScrollView
-          style={styles.categoryList}
+          style={[styles.categoryList, { maxHeight: menuLayout.categoryListMaxHeight }]}
           contentContainerStyle={styles.categoryListContent}
           showsVerticalScrollIndicator={false}
         >
@@ -176,7 +195,7 @@ const styles = StyleSheet.create({
     elevation: 10
   },
   categoryList: {
-    maxHeight: MAX_CATEGORY_LIST_HEIGHT
+    flexGrow: 0
   },
   categoryListContent: {
     gap: 2
