@@ -56,7 +56,8 @@ export default function App() {
   const [fontsLoaded, fontError] = useFonts({
     Manrope_500Medium: require('./assets/fonts/Manrope_500Medium.ttf'),
     Manrope_600SemiBold: require('./assets/fonts/Manrope_600SemiBold.ttf'),
-    SpaceMono_400Regular: require('./assets/fonts/SpaceMono_400Regular.ttf')
+    SpaceMono_400Regular: require('./assets/fonts/SpaceMono_400Regular.ttf'),
+    FunnelDisplay_600SemiBold: require('./assets/fonts/FunnelDisplay_600SemiBold.ttf')
   });
 
   if (!fontsLoaded && !fontError) {

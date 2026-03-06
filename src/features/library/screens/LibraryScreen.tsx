@@ -34,6 +34,7 @@ import { AddCategoryModal } from '../../categories/components/AddCategoryModal';
 import { AccountActionsMenu } from '../components/AccountActionsMenu';
 import { CategoryFilterBar } from '../components/CategoryFilterBar';
 import { EmptyState } from '../components/EmptyState';
+import { HowItWorksModal } from '../components/HowItWorksModal';
 import { TimestampActionsMenu } from '../components/TimestampActionsMenu';
 import { TimestampCard, type MenuAnchorRect } from '../components/TimestampCard';
 import { useLibraryState } from '../hooks/useLibraryState';
@@ -91,6 +92,7 @@ export function LibraryScreen({
   const [mutating, setMutating] = useState(false);
   const [editingCategories, setEditingCategories] = useState(false);
   const [avatarImageError, setAvatarImageError] = useState(false);
+  const [howItWorksOpen, setHowItWorksOpen] = useState(false);
   const avatarButtonRef = useRef<View>(null);
 
   const categories = data?.categories ?? { [DEFAULT_CATEGORY]: [] };
@@ -115,10 +117,11 @@ export function LibraryScreen({
     const selected = selectedCategory === ALL_FILTER ? 'all' : selectedCategory;
     return flattenCategories(categories, selected);
   }, [categories, selectedCategory]);
+  const totalVideoCount = useMemo(() => flattenCategories(categories, 'all').length, [categories]);
 
   const counts = useMemo(() => {
     const next: Record<string, number> = {
-      [ALL_FILTER]: flattenCategories(categories, 'all').length
+      [ALL_FILTER]: totalVideoCount
     };
 
     categoryNames.forEach((category) => {
@@ -126,7 +129,8 @@ export function LibraryScreen({
     });
 
     return next;
-  }, [categories, categoryNames]);
+  }, [categories, categoryNames, totalVideoCount]);
+  const showEmptyState = !isLoading && !error && totalVideoCount === 0;
 
   const refreshState = useCallback(async () => {
     await queryClient.invalidateQueries({ queryKey: ['library-state', userId] });
@@ -366,6 +370,33 @@ export function LibraryScreen({
     });
   }, [openYouTubeVideo]);
 
+  const handleOpenYouTubeFromEmptyState = useCallback(() => {
+    const candidates =
+      Platform.OS === 'ios'
+        ? ['youtube://', 'https://www.youtube.com']
+        : ['vnd.youtube://', 'youtube://', 'https://www.youtube.com'];
+
+    const open = async () => {
+      let lastError: unknown = null;
+
+      for (const candidate of candidates) {
+        try {
+          await Linking.openURL(candidate);
+          trackEvent('open_video', { source: 'empty_state', openedUrl: candidate });
+          return;
+        } catch (error) {
+          lastError = error;
+        }
+      }
+
+      throw lastError;
+    };
+
+    void open().catch(() => {
+      Alert.alert('Cannot Open YouTube', 'Please make sure YouTube is installed and try again.');
+    });
+  }, []);
+
   const handleDeleteTimestamp = useCallback((video: FlattenedVideo) => {
     Alert.alert('Delete Timestamp', 'Remove this timestamp from your library?', [
       { text: 'Cancel', style: 'cancel' },
@@ -548,63 +579,73 @@ export function LibraryScreen({
         </View>
       </View>
 
-      <View style={styles.categoriesSection}>
-        <View style={styles.categoriesHeader}>
-          <Text style={styles.categoriesTitle}>Categories</Text>
-          <View style={styles.categoriesHeaderActions}>
-            {editingCategories ? (
-              <Pressable style={styles.saveCategoriesButton} onPress={() => setEditingCategories(false)}>
-                <Text style={styles.saveCategoriesButtonText}>Save</Text>
-              </Pressable>
-            ) : (
-              <>
-                <Pressable
-                  style={[
-                    styles.categoryActionButton,
-                    deletableCategories.length === 0 ? styles.categoryActionButtonDisabled : null
-                  ]}
-                  onPress={() => setEditingCategories(true)}
-                  disabled={deletableCategories.length === 0}
-                >
-                  <HomeEditIcon width={14} height={14} />
-                </Pressable>
-                <Pressable style={styles.categoryActionButton} onPress={() => setAddCategoryOpen(true)}>
-                  <HomeAddIcon width={14} height={14} />
-                </Pressable>
-              </>
-            )}
-          </View>
-        </View>
-
-        <CategoryFilterBar
-          categories={filterCategories}
-          selected={selectedCategory}
-          counts={counts}
-          onSelect={setSelectedCategory}
-          editMode={editingCategories}
-          lockedCategories={[ALL_FILTER, DEFAULT_CATEGORY]}
-          onDeleteCategory={handleDeleteCategory}
-        />
-      </View>
-
-      {error ? <Text style={styles.errorText}>Failed to load timestamps. Pull to retry.</Text> : null}
-
-      <FlatList
-        style={styles.list}
-        contentContainerStyle={styles.listContent}
-        data={videos}
-        keyExtractor={(item) => item.videoId}
-        refreshing={isLoading || mutating}
-        onRefresh={() => void refreshState()}
-        ListEmptyComponent={<EmptyState />}
-        renderItem={({ item }) => (
-          <TimestampCard
-            item={item}
-            onOpen={handleOpenVideo}
-            onOpenMenu={handleOpenTimestampMenu}
+      {showEmptyState ? (
+        <View style={styles.emptyStateShell}>
+          <EmptyState
+            onHowItWorks={() => setHowItWorksOpen(true)}
+            onOpenYouTube={handleOpenYouTubeFromEmptyState}
           />
-        )}
-      />
+        </View>
+      ) : (
+        <>
+          <View style={styles.categoriesSection}>
+            <View style={styles.categoriesHeader}>
+              <Text style={styles.categoriesTitle}>Categories</Text>
+              <View style={styles.categoriesHeaderActions}>
+                {editingCategories ? (
+                  <Pressable style={styles.saveCategoriesButton} onPress={() => setEditingCategories(false)}>
+                    <Text style={styles.saveCategoriesButtonText}>Save</Text>
+                  </Pressable>
+                ) : (
+                  <>
+                    <Pressable
+                      style={[
+                        styles.categoryActionButton,
+                        deletableCategories.length === 0 ? styles.categoryActionButtonDisabled : null
+                      ]}
+                      onPress={() => setEditingCategories(true)}
+                      disabled={deletableCategories.length === 0}
+                    >
+                      <HomeEditIcon width={14} height={14} />
+                    </Pressable>
+                    <Pressable style={styles.categoryActionButton} onPress={() => setAddCategoryOpen(true)}>
+                      <HomeAddIcon width={14} height={14} />
+                    </Pressable>
+                  </>
+                )}
+              </View>
+            </View>
+
+            <CategoryFilterBar
+              categories={filterCategories}
+              selected={selectedCategory}
+              counts={counts}
+              onSelect={setSelectedCategory}
+              editMode={editingCategories}
+              lockedCategories={[ALL_FILTER, DEFAULT_CATEGORY]}
+              onDeleteCategory={handleDeleteCategory}
+            />
+          </View>
+
+          {error ? <Text style={styles.errorText}>Failed to load timestamps. Pull to retry.</Text> : null}
+
+          <FlatList
+            style={styles.list}
+            contentContainerStyle={styles.listContent}
+            data={videos}
+            keyExtractor={(item) => item.videoId}
+            refreshing={isLoading || mutating}
+            onRefresh={() => void refreshState()}
+            renderItem={({ item }) => (
+              <TimestampCard
+                item={item}
+                onOpen={handleOpenVideo}
+                onOpenMenu={handleOpenTimestampMenu}
+              />
+            )}
+          />
+        </>
+      )}
 
       <AddCategoryModal
         visible={addCategoryOpen}
@@ -658,6 +699,15 @@ export function LibraryScreen({
         thumbnailUrl={missingTimestampNotice?.thumbnailUrl ?? ''}
         onDismiss={handleDismissMissingTimestamp}
         onGoToYoutube={handleGoToYouTubeFromDialog}
+      />
+
+      <HowItWorksModal
+        visible={howItWorksOpen}
+        onClose={() => setHowItWorksOpen(false)}
+        onTryItOut={() => {
+          setHowItWorksOpen(false);
+          handleOpenYouTubeFromEmptyState();
+        }}
       />
 
       {processingShare || signingOut || deletingAccount ? (
@@ -777,6 +827,11 @@ const styles = StyleSheet.create({
     color: '#F3A3B6',
     paddingHorizontal: 16,
     marginBottom: 8
+  },
+  emptyStateShell: {
+    flex: 1,
+    alignItems: 'center',
+    paddingTop: 205
   },
   list: {
     flex: 1
