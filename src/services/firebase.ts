@@ -1,5 +1,6 @@
 import { initializeApp } from 'firebase/app';
-import { getAuth } from 'firebase/auth';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getAuth, getReactNativePersistence, initializeAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 
 import { env, validateEnvironment } from '../config/env';
@@ -16,7 +17,15 @@ const firebaseApp = initializeApp({
   ...(env.firebase.measurementId ? { measurementId: env.firebase.measurementId } : {})
 });
 
-const authInstance = getAuth(firebaseApp);
+const authInstance = (() => {
+  try {
+    return initializeAuth(firebaseApp, {
+      persistence: getReactNativePersistence(AsyncStorage)
+    });
+  } catch {
+    return getAuth(firebaseApp);
+  }
+})();
 
 export const app = firebaseApp;
 export const auth = authInstance;

@@ -29,6 +29,7 @@ import { fetchYouTubeMetadata } from '../../../services/youtubeMetadata';
 import { shareIntentService } from '../../../services/shareIntent';
 import type { FlattenedVideo, ShareParseSuccess } from '../../../types/domain';
 import { buildYouTubeWatchUrl, parseSharedTextForYouTubeTimestamp } from '../../../utils/youtubeParser';
+import { buildYouTubeOpenCandidates, type YouTubeOpenPlatform } from '../../../utils/youtubeOpen';
 import { AddCategoryModal } from '../../categories/components/AddCategoryModal';
 import { AccountActionsMenu } from '../components/AccountActionsMenu';
 import { CategoryFilterBar } from '../components/CategoryFilterBar';
@@ -131,21 +132,42 @@ export function LibraryScreen({
     await queryClient.invalidateQueries({ queryKey: ['library-state', userId] });
   }, [queryClient, userId]);
 
-  const openYouTubeFromAlert = useCallback(async (videoId: string) => {
-    const deepLink = `youtube://www.youtube.com/watch?v=${encodeURIComponent(videoId)}`;
-    const fallback = `https://youtu.be/${encodeURIComponent(videoId)}`;
+  const openYouTubeVideo = useCallback(async (videoId: string, seconds: number, source: string) => {
+    const platform: YouTubeOpenPlatform =
+      Platform.OS === 'android' ? 'android' : Platform.OS === 'ios' ? 'ios' : 'web';
+    const candidates = buildYouTubeOpenCandidates(videoId, seconds, platform);
 
-    try {
-      const canOpenDeepLink = await Linking.canOpenURL(deepLink);
-      if (canOpenDeepLink) {
-        await Linking.openURL(deepLink);
+    let lastError: unknown = null;
+
+    for (const candidate of candidates) {
+      try {
+        await Linking.openURL(candidate);
+        trackEvent('open_video', {
+          videoId,
+          source,
+          seconds,
+          openedUrl: candidate,
+          platform
+        });
         return;
+      } catch (error) {
+        lastError = error;
+        trackEvent('open_video', {
+          videoId,
+          source,
+          seconds,
+          failedUrl: candidate,
+          platform,
+          error: error instanceof Error ? error.message : 'unknown'
+        });
       }
-    } catch {
-      // Fall through to browser fallback URL.
     }
 
-    await Linking.openURL(fallback);
+    if (lastError instanceof Error) {
+      throw lastError;
+    }
+
+    throw new Error('Unable to open YouTube');
   }, []);
 
   const saveSharedTimestamp = useCallback(async (
@@ -329,14 +351,20 @@ export function LibraryScreen({
     }
 
     setMissingTimestampNotice(null);
-    void openYouTubeFromAlert(missingTimestampNotice.videoId);
-  }, [missingTimestampNotice, openYouTubeFromAlert]);
+    void openYouTubeVideo(missingTimestampNotice.videoId, 0, 'missing_timestamp_notice').catch(() => {
+      Alert.alert('Cannot Open YouTube', 'Please make sure YouTube is installed and try again.');
+    });
+  }, [missingTimestampNotice, openYouTubeVideo]);
 
   const handleOpenVideo = useCallback((video: FlattenedVideo) => {
     trackEvent('open_video', { videoId: video.videoId, source: 'library' });
-    const url = buildYouTubeWatchUrl(video.videoId, video.currentTime);
-    void Linking.openURL(url);
-  }, []);
+    void openYouTubeVideo(video.videoId, video.currentTime, 'library').catch(() => {
+      const fallbackUrl = buildYouTubeWatchUrl(video.videoId, video.currentTime);
+      void Linking.openURL(fallbackUrl).catch(() => {
+        Alert.alert('Cannot Open Video', 'Unable to open this YouTube link on this device right now.');
+      });
+    });
+  }, [openYouTubeVideo]);
 
   const handleDeleteTimestamp = useCallback((video: FlattenedVideo) => {
     Alert.alert('Delete Timestamp', 'Remove this timestamp from your library?', [
