@@ -2,13 +2,14 @@ import React, { useMemo, useState } from 'react';
 import { Modal, Platform, Pressable, StatusBar, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 
-import { HomeSignOutIcon } from '../../../components/FigmaIcons';
+import { HomeHowItWorksIcon, HomeSignOutIcon } from '../../../components/FigmaIcons';
 import type { MenuAnchorRect } from './TimestampCard';
 
 interface Props {
   visible: boolean;
   anchor: MenuAnchorRect | null;
   onClose: () => void;
+  onHowItWorks: () => void;
   onSignOut: () => void;
   onDeleteAccount: () => void;
 }
@@ -22,7 +23,7 @@ function clamp(value: number, min: number, max: number) {
   return Math.min(Math.max(value, min), max);
 }
 
-export function AccountActionsMenu({ visible, anchor, onClose, onSignOut, onDeleteAccount }: Props) {
+export function AccountActionsMenu({ visible, anchor, onClose, onHowItWorks, onSignOut, onDeleteAccount }: Props) {
   const { width: screenWidth, height: screenHeight } = useWindowDimensions();
   const [menuHeight, setMenuHeight] = useState(0);
 
@@ -31,7 +32,7 @@ export function AccountActionsMenu({ visible, anchor, onClose, onSignOut, onDele
       return { left: SCREEN_PADDING, top: SCREEN_PADDING };
     }
 
-    const estimatedHeight = menuHeight || 104;
+    const estimatedHeight = menuHeight || 152;
     const left = clamp(
       anchor.x + anchor.width - MENU_WIDTH,
       SCREEN_PADDING,
@@ -67,6 +68,14 @@ export function AccountActionsMenu({ visible, anchor, onClose, onSignOut, onDele
           ]}
           onLayout={(event) => setMenuHeight(event.nativeEvent.layout.height)}
         >
+          <Pressable
+            style={({ pressed }) => [styles.menuButton, pressed ? styles.menuButtonPressed : null]}
+            onPress={onHowItWorks}
+          >
+            <HomeHowItWorksIcon width={14} height={14} />
+            <Text style={styles.menuText}>How it works</Text>
+          </Pressable>
+
           <Pressable
             style={({ pressed }) => [styles.menuButton, pressed ? styles.menuButtonPressed : null]}
             onPress={onSignOut}

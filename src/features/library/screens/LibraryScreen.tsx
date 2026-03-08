@@ -37,6 +37,7 @@ import { HowItWorksModal } from '../components/HowItWorksModal';
 import { TimestampActionsMenu } from '../components/TimestampActionsMenu';
 import { TimestampCard, type MenuAnchorRect } from '../components/TimestampCard';
 import { useLibraryState } from '../hooks/useLibraryState';
+import { deriveLibraryHomeViewState } from './libraryHomeViewState';
 import { ShareConfirmationModal } from '../../share/components/ShareConfirmationModal';
 import { MissingTimestampDialog } from '../../share/components/MissingTimestampDialog';
 
@@ -129,7 +130,17 @@ export function LibraryScreen({
 
     return next;
   }, [categories, categoryNames, totalVideoCount]);
-  const showEmptyState = !isLoading && !error && totalVideoCount === 0;
+  const hasError = Boolean(error);
+  const homeViewState = useMemo(
+    () =>
+      deriveLibraryHomeViewState({
+        isLoading,
+        hasError,
+        totalVideoCount,
+        categoryNames
+      }),
+    [categoryNames, hasError, isLoading, totalVideoCount]
+  );
 
   const refreshState = useCallback(async () => {
     await queryClient.invalidateQueries({ queryKey: ['library-state', userId] });
@@ -457,6 +468,11 @@ export function LibraryScreen({
     );
   }, [onDeleteAccount]);
 
+  const handleOpenHowItWorksFromMenu = useCallback(() => {
+    setAccountMenuAnchor(null);
+    setHowItWorksOpen(true);
+  }, []);
+
   const handleMoveTimestamp = useCallback(async (targetCategory: string) => {
     if (!timestampMenu) {
       return;
@@ -573,73 +589,84 @@ export function LibraryScreen({
         </View>
       </View>
 
-      {showEmptyState ? (
-        <View style={styles.emptyStateShell}>
-          <EmptyState
-            onHowItWorks={() => setHowItWorksOpen(true)}
-            onOpenYouTube={handleOpenYouTubeFromEmptyState}
-          />
-        </View>
-      ) : (
-        <>
-          <View style={styles.categoriesSection}>
-            <View style={styles.categoriesHeader}>
-              <Text style={styles.categoriesTitle}>Categories</Text>
-              <View style={styles.categoriesHeaderActions}>
-                {editingCategories ? (
-                  <Pressable style={styles.saveCategoriesButton} onPress={() => setEditingCategories(false)}>
-                    <Text style={styles.saveCategoriesButtonText}>Save</Text>
+      {homeViewState.showCategoriesSection ? (
+        <View style={styles.categoriesSection}>
+          <View style={styles.categoriesHeader}>
+            <Text style={styles.categoriesTitle}>Categories</Text>
+            <View style={styles.categoriesHeaderActions}>
+              {editingCategories ? (
+                <Pressable style={styles.saveCategoriesButton} onPress={() => setEditingCategories(false)}>
+                  <Text style={styles.saveCategoriesButtonText}>Save</Text>
+                </Pressable>
+              ) : (
+                <>
+                  <Pressable
+                    style={[
+                      styles.categoryActionButton,
+                      deletableCategories.length === 0 ? styles.categoryActionButtonDisabled : null
+                    ]}
+                    onPress={() => setEditingCategories(true)}
+                    disabled={deletableCategories.length === 0}
+                  >
+                    <HomeEditIcon width={14} height={14} />
                   </Pressable>
-                ) : (
-                  <>
-                    <Pressable
-                      style={[
-                        styles.categoryActionButton,
-                        deletableCategories.length === 0 ? styles.categoryActionButtonDisabled : null
-                      ]}
-                      onPress={() => setEditingCategories(true)}
-                      disabled={deletableCategories.length === 0}
-                    >
-                      <HomeEditIcon width={14} height={14} />
-                    </Pressable>
-                    <Pressable style={styles.categoryActionButton} onPress={() => setAddCategoryOpen(true)}>
-                      <HomeAddIcon width={14} height={14} />
-                    </Pressable>
-                  </>
-                )}
-              </View>
+                  <Pressable style={styles.categoryActionButton} onPress={() => setAddCategoryOpen(true)}>
+                    <HomeAddIcon width={14} height={14} />
+                  </Pressable>
+                </>
+              )}
             </View>
-
-            <CategoryFilterBar
-              categories={filterCategories}
-              selected={selectedCategory}
-              counts={counts}
-              onSelect={setSelectedCategory}
-              editMode={editingCategories}
-              lockedCategories={[ALL_FILTER, DEFAULT_CATEGORY]}
-              onDeleteCategory={handleDeleteCategory}
-            />
           </View>
 
-          {error ? <Text style={styles.errorText}>Failed to load timestamps. Pull to retry.</Text> : null}
-
-          <FlatList
-            style={styles.list}
-            contentContainerStyle={styles.listContent}
-            data={videos}
-            keyExtractor={(item) => item.videoId}
-            refreshing={isLoading || mutating}
-            onRefresh={() => void refreshState()}
-            renderItem={({ item }) => (
-              <TimestampCard
-                item={item}
-                onOpen={handleOpenVideo}
-                onOpenMenu={handleOpenTimestampMenu}
-              />
-            )}
+          <CategoryFilterBar
+            categories={filterCategories}
+            selected={selectedCategory}
+            counts={counts}
+            onSelect={setSelectedCategory}
+            editMode={editingCategories}
+            lockedCategories={[ALL_FILTER, DEFAULT_CATEGORY]}
+            onDeleteCategory={handleDeleteCategory}
           />
-        </>
-      )}
+        </View>
+      ) : null}
+
+      {error ? <Text style={styles.errorText}>Failed to load timestamps. Pull to retry.</Text> : null}
+
+      {homeViewState.showEmptyWithCategories ? (
+        <View style={styles.emptyStateWithCategoriesShell}>
+          <EmptyState onHowItWorks={() => setHowItWorksOpen(true)} />
+        </View>
+      ) : null}
+
+      {homeViewState.showFullEmptyState ? (
+        <View style={styles.emptyStateShell}>
+          <EmptyState onHowItWorks={() => setHowItWorksOpen(true)} />
+          {homeViewState.showVideoLoading ? (
+            <View style={styles.emptyLoadingHint}>
+              <ActivityIndicator size="small" color="#ED1A43" />
+              <Text style={styles.emptyLoadingHintText}>{"Warming up your videos... they'll pop in now."}</Text>
+            </View>
+          ) : null}
+        </View>
+      ) : null}
+
+      {homeViewState.showVideoList ? (
+        <FlatList
+          style={styles.list}
+          contentContainerStyle={styles.listContent}
+          data={videos}
+          keyExtractor={(item) => item.videoId}
+          refreshing={isLoading || mutating}
+          onRefresh={() => void refreshState()}
+          renderItem={({ item }) => (
+            <TimestampCard
+              item={item}
+              onOpen={handleOpenVideo}
+              onOpenMenu={handleOpenTimestampMenu}
+            />
+          )}
+        />
+      ) : null}
 
       <AddCategoryModal
         visible={addCategoryOpen}
@@ -669,6 +696,7 @@ export function LibraryScreen({
         visible={Boolean(accountMenuAnchor)}
         anchor={accountMenuAnchor}
         onClose={() => setAccountMenuAnchor(null)}
+        onHowItWorks={handleOpenHowItWorksFromMenu}
         onSignOut={handleRequestSignOut}
         onDeleteAccount={handleRequestDeleteAccount}
       />
@@ -698,7 +726,8 @@ export function LibraryScreen({
       <HowItWorksModal
         visible={howItWorksOpen}
         onClose={() => setHowItWorksOpen(false)}
-        onTryItOut={() => {
+        onTryItOut={() => setHowItWorksOpen(false)}
+        onVisitYouTube={() => {
           setHowItWorksOpen(false);
           handleOpenYouTubeFromEmptyState();
         }}
@@ -826,6 +855,24 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     paddingTop: 205
+  },
+  emptyLoadingHint: {
+    marginTop: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8
+  },
+  emptyLoadingHintText: {
+    color: '#9D9D9D',
+    fontSize: 13,
+    lineHeight: 18,
+    fontFamily: 'Manrope_500Medium',
+    textAlign: 'center'
+  },
+  emptyStateWithCategoriesShell: {
+    flex: 1,
+    alignItems: 'center',
+    paddingTop: 72
   },
   list: {
     flex: 1

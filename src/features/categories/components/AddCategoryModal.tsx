@@ -75,10 +75,10 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: 320,
     backgroundColor: '#191919',
-    borderRadius: 8,
+    borderRadius: 12,
     borderWidth: 1,
     borderColor: '#2D2D2D',
-    padding: 20,
+    padding: 16,
     gap: 12
   },
   header: {
@@ -99,7 +99,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center'
   },
   input: {
-    borderRadius: 4,
+    borderRadius: 8,
     borderColor: '#393838',
     borderWidth: 1,
     backgroundColor: '#242424',
@@ -121,7 +121,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#242424',
     borderWidth: 1,
     borderColor: '#393838',
-    borderRadius: 4,
+    borderRadius: 8,
     paddingHorizontal: 12,
     paddingVertical: 6
   },
@@ -132,7 +132,7 @@ const styles = StyleSheet.create({
     fontFamily: 'Manrope_500Medium'
   },
   save: {
-    borderRadius: 4,
+    borderRadius: 8,
     borderWidth: 1,
     borderColor: '#ED1A43',
     backgroundColor: '#781D2F',
