@@ -1,12 +1,12 @@
 import React from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
-import { BrandMark } from './BrandMark';
+import { AppLogoIcon } from './FigmaIcons';
 
 export function CenteredLoader() {
   return (
     <View style={styles.container}>
-      <BrandMark size="large" />
+      <AppLogoIcon width={72} height={71} />
       <ActivityIndicator style={styles.loader} size="small" color="#ED1A43" />
     </View>
   );

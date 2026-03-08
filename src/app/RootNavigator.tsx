@@ -36,6 +36,38 @@ function getDeleteAccountErrorMessage(error: unknown) {
   return 'Unable to delete your account right now. Please try again.';
 }
 
+function getSignInErrorMessage(error: unknown) {
+  const code =
+    typeof error === 'object' && error !== null && 'code' in error ? String((error as { code?: unknown }).code) : '';
+  const message = error instanceof Error ? error.message : '';
+
+  if (code === 'SIGN_IN_CANCELLED') {
+    return 'Sign-in was cancelled.';
+  }
+
+  if (code === 'IN_PROGRESS') {
+    return 'Sign-in is already in progress. Please wait a moment and try again.';
+  }
+
+  if (code === 'PLAY_SERVICES_NOT_AVAILABLE') {
+    return 'Google Play Services is not available on this device. Please update it and try again.';
+  }
+
+  if (
+    code === 'NETWORK_ERROR' ||
+    code === 'auth/network-request-failed' ||
+    message.includes('NETWORK_ERROR')
+  ) {
+    return 'Unable to connect right now. Please check your internet connection and try again.';
+  }
+
+  if (code === 'DEVELOPER_ERROR') {
+    return 'Sign-in setup is incomplete for this app build. Please try again later.';
+  }
+
+  return 'Unable to sign in right now. Please try again.';
+}
+
 export function RootNavigator() {
   const { user, initializing, signingIn, signingOut, deletingAccount, signIn, signOut, deleteAccount } = useAuth();
 
@@ -49,7 +81,7 @@ export function RootNavigator() {
         loading={signingIn}
         onSignIn={() => {
           void signIn().catch((error) => {
-            Alert.alert('Sign-In Failed', error instanceof Error ? error.message : 'Unable to sign in.');
+            Alert.alert('Sign-In Failed', getSignInErrorMessage(error));
           });
         }}
       />

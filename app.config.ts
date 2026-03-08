@@ -50,7 +50,8 @@ export default ({ config }: ConfigContext): ExpoConfig => {
           fonts: [
             './assets/fonts/Manrope_500Medium.ttf',
             './assets/fonts/Manrope_600SemiBold.ttf',
-            './assets/fonts/SpaceMono_400Regular.ttf'
+            './assets/fonts/SpaceMono_400Regular.ttf',
+            './assets/fonts/FunnelDisplay_600SemiBold.ttf'
           ]
         }
       ],

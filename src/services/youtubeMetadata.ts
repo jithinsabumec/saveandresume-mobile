@@ -7,7 +7,7 @@ function fallbackThumbnail(videoId: string): string {
   return `https://i.ytimg.com/vi/${encodeURIComponent(videoId)}/hqdefault.jpg`;
 }
 
-export async function fetchYouTubeMetadata(videoId: string, timeoutMs = 5000): Promise<YouTubeMetadata> {
+export async function fetchYouTubeMetadata(videoId: string, timeoutMs = 2500): Promise<YouTubeMetadata> {
   const canonicalUrl = `https://www.youtube.com/watch?v=${encodeURIComponent(videoId)}`;
   const endpoint = `https://www.youtube.com/oembed?url=${encodeURIComponent(canonicalUrl)}&format=json`;
 

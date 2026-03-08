@@ -17,7 +17,6 @@ import {
 
 import { HomeAddIcon, HomeEditIcon, HomeLogoIcon } from '../../../components/FigmaIcons';
 import { stateRepository } from '../../../data/stateRepository';
-import { timestampsRepository } from '../../../data/timestampsRepository';
 import {
   DEFAULT_CATEGORY,
   flattenCategories,
@@ -184,19 +183,14 @@ export function LibraryScreen({
     },
     libraryMetadata: { title: string; thumbnailUrl: string }
   ) => {
-    await timestampsRepository.createTimestamp(userId, payload);
-    await stateRepository.upsertTimestamp(
+    const result = await stateRepository.saveSharedTimestamp(
       userId,
-      {
-        videoId: payload.videoId,
-        title: libraryMetadata.title,
-        currentTime: payload.rawSeconds,
-        thumbnail: libraryMetadata.thumbnailUrl,
-        timestamp: Date.now()
-      },
+      payload,
+      libraryMetadata,
       DEFAULT_CATEGORY
     );
-  }, [userId]);
+    queryClient.setQueryData(['library-state', userId], result.state);
+  }, [queryClient, userId]);
 
   const consumeSharedText = useCallback(async (sharedText: string) => {
     trackEvent('share_received', { platform: Platform.OS });
@@ -227,14 +221,14 @@ export function LibraryScreen({
               thumbnailUrl: metadata.thumbnailUrl || fallbackThumbnail
             }
           );
-          await refreshState();
-          await shareIntentService.clearInitialSharedText();
           trackEvent('save_success', { source: 'share_intent_missing_timestamp' });
           setMissingTimestampNotice({
             videoId,
             title: metadata.title || `YouTube video ${videoId}`,
             thumbnailUrl: metadata.thumbnailUrl || fallbackThumbnail
           });
+          void refreshState().catch(() => undefined);
+          void shareIntentService.clearInitialSharedText().catch(() => undefined);
         } catch (saveError) {
           trackEvent('save_failure', {
             source: 'share_intent_missing_timestamp',
@@ -325,10 +319,10 @@ export function LibraryScreen({
           thumbnailUrl: pendingShare.thumbnailUrl
         }
       );
-      await refreshState();
-      await shareIntentService.clearInitialSharedText();
       setPendingShare(null);
       trackEvent('save_success', { source: 'share_intent' });
+      void refreshState().catch(() => undefined);
+      void shareIntentService.clearInitialSharedText().catch(() => undefined);
     } catch (saveError) {
       trackEvent('save_failure', {
         source: 'share_intent',

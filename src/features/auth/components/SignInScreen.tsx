@@ -61,7 +61,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 24,
     paddingTop: 180,
-    paddingBottom: 24
+    paddingBottom: 40
   },
   hero: {
     width: '100%',
@@ -94,7 +94,8 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: 342,
     alignItems: 'center',
-    gap: 24
+    gap: 24,
+    paddingBottom: 8
   },
   button: {
     width: '100%',

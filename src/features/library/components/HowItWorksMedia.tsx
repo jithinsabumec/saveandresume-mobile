@@ -1,29 +1,42 @@
 import { ResizeMode, Video, type AVPlaybackSource } from 'expo-av';
 import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Image, StyleSheet, Text, type ImageSourcePropType, View } from 'react-native';
 
 interface Props {
   source: AVPlaybackSource | null;
+  posterSource: ImageSourcePropType;
   aspectRatio: number;
   shouldPlay: boolean;
+  hasVideoError: boolean;
+  onVideoError: () => void;
 }
 
-export function HowItWorksMedia({ source, aspectRatio, shouldPlay }: Props) {
+export function HowItWorksMedia({ source, posterSource, aspectRatio, shouldPlay, hasVideoError, onVideoError }: Props) {
+  const showVideo = Boolean(source) && !hasVideoError;
+
   return (
     <View style={[styles.frame, { aspectRatio }]}>
-      {source ? (
+      {showVideo ? (
         <Video
           style={styles.video}
-          source={source}
+          source={source ?? undefined}
           useNativeControls={false}
           shouldPlay={shouldPlay}
           isLooping
           resizeMode={ResizeMode.COVER}
+          onError={onVideoError}
         />
       ) : (
-        <View style={styles.placeholder}>
-          <Text style={styles.placeholderTitle}>Add your how-it-works video</Text>
-          <Text style={styles.placeholderText}>Set a video source in src/config/onboarding.ts</Text>
+        <View style={styles.posterWrap}>
+          <Image source={posterSource} style={styles.poster} resizeMode="cover" />
+          <View style={styles.placeholderOverlay}>
+            <Text style={styles.placeholderTitle}>How it works preview</Text>
+            <Text style={styles.placeholderText}>
+              {hasVideoError
+                ? "Couldn't load video. Check internet and try again."
+                : 'Set EXPO_PUBLIC_HOW_IT_WORKS_VIDEO_URL to stream your video.'}
+            </Text>
+          </View>
         </View>
       )}
     </View>
@@ -35,19 +48,33 @@ const styles = StyleSheet.create({
     width: '100%',
     borderRadius: 12,
     overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: '#3A3A3A',
     backgroundColor: '#0A0A0A'
   },
   video: {
     width: '100%',
     height: '100%'
   },
-  placeholder: {
+  posterWrap: {
+    flex: 1,
+    width: '100%',
+    height: '100%'
+  },
+  poster: {
+    width: '100%',
+    height: '100%'
+  },
+  placeholderOverlay: {
+    position: 'absolute',
+    left: 12,
+    right: 12,
+    bottom: 12,
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 16,
+    backgroundColor: 'rgba(0, 0, 0, 0.62)',
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
     gap: 8
   },
   placeholderTitle: {

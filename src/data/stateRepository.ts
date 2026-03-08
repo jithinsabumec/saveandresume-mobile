@@ -1,4 +1,4 @@
-import { doc, getDoc, runTransaction, setDoc } from 'firebase/firestore';
+import { collection, doc, getDoc, runTransaction, serverTimestamp, setDoc } from 'firebase/firestore';
 
 import { db } from '../services/firebase';
 import type { AppState, CategoryMap, VideoEntry } from '../types/domain';
@@ -93,6 +93,51 @@ export const stateRepository = {
       const payload = buildPersistedPayload(categories, true);
       transaction.set(ref, payload, { merge: true });
       return parseState(payload);
+    });
+  },
+
+  async saveSharedTimestamp(
+    userId: string,
+    payload: {
+      videoId: string;
+      sourceUrl: string;
+      rawSeconds: number;
+      formattedTime: string;
+      note: string | null;
+    },
+    libraryMetadata: { title: string; thumbnailUrl: string },
+    targetCategory = DEFAULT_CATEGORY
+  ): Promise<{ state: AppState; timestampId: string }> {
+    return runTransaction(db, async (transaction) => {
+      const ref = stateDocumentRef(userId);
+      const snapshot = await transaction.get(ref);
+      const state = parseState(snapshot.exists() ? (snapshot.data() as Record<string, unknown>) : undefined);
+
+      const video: VideoEntry = {
+        videoId: payload.videoId,
+        title: libraryMetadata.title,
+        currentTime: payload.rawSeconds,
+        thumbnail: libraryMetadata.thumbnailUrl,
+        timestamp: Date.now()
+      };
+      const categories = upsertTimestampTransform(state.categories, video, targetCategory);
+      const statePayload = buildPersistedPayload(categories, true);
+
+      const timestampRef = doc(collection(db, 'users', userId, 'timestamps'));
+      transaction.set(timestampRef, {
+        videoId: payload.videoId,
+        sourceUrl: payload.sourceUrl,
+        rawSeconds: payload.rawSeconds,
+        formattedTime: payload.formattedTime,
+        note: payload.note,
+        createdAt: serverTimestamp()
+      });
+      transaction.set(ref, statePayload, { merge: true });
+
+      return {
+        state: parseState(statePayload),
+        timestampId: timestampRef.id
+      };
     });
   },
 

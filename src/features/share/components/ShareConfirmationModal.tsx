@@ -76,11 +76,11 @@ export function ShareConfirmationModal({
               <Pressable
                 style={({ pressed }) => [
                   styles.saveButton,
-                  (saving || loadingMetadata) ? styles.saveButtonDisabled : null,
-                  pressed && !(saving || loadingMetadata) ? styles.saveButtonPressed : null
+                  saving ? styles.saveButtonDisabled : null,
+                  pressed && !saving ? styles.saveButtonPressed : null
                 ]}
                 onPress={onConfirm}
-                disabled={saving || loadingMetadata}
+                disabled={saving}
               >
                 {saving ? <ActivityIndicator color="#FFFFFF" /> : <Text style={styles.saveText}>SAVE</Text>}
               </Pressable>
